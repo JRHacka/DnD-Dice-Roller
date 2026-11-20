@@ -293,7 +293,8 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
       b.setAttribute("aria-pressed", b.dataset.mode === tray.mode);
     });
     $("pickedLabel").textContent = `${tray.count}d${tray.sides}${tray.mod ? " " + fmtMod(tray.mod) : ""}${tray.mode === "adv" ? " · advantage" : tray.mode === "dis" ? " · disadvantage" : ""}`;
-    document.dispatchEvent(new CustomEvent("tray:change", { detail: { sides: tray.sides } }));
+    const shownDice = tray.mode !== "norm" ? 2 : tray.count;   // advantage/disadvantage rolls two d20s
+    document.dispatchEvent(new CustomEvent("tray:change", { detail: { sides: tray.sides, count: shownDice } }));
   }
 
   function doRoll() {
@@ -502,18 +503,10 @@ function fitCanvas() {
 }
 new ResizeObserver(fitCanvas).observe(canvas);  // run fitCanvas now and whenever the canvas resizes
 
-// --- How far the die's center can travel before its edge touches the box, in 3D units
-function bounds() {
+// --- Where the edges of the visible table are, in 3D units (measured from the center)
+function walls() {
   const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
-  const halfW = halfH * camera.aspect;
-  return { x: Math.max(0, halfW - dieRadius - 0.2), y: Math.max(0, halfH - dieRadius - 0.2) };
-}
-
-// --- Bounce a position back and forth between -L and +L, like a ball between two walls
-function bounce(p, L) {
-  if (L === 0) return 0;
-  const m = ((p + L) % (4 * L) + 4 * L) % (4 * L);
-  return m <= 2 * L ? m - L : 3 * L - m;
+  return { x: halfH * camera.aspect, y: halfH };
 }
 
 // --- d10 has no built-in shape, so we build it from points (a "pentagonal trapezohedron")
@@ -557,47 +550,124 @@ const SHAPES = {
 const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2440, roughness: 0.5, flatShading: true });
 const ballMat = bodyMat.clone(); ballMat.flatShading = false;      // same color, smooth for the ball
 const edgeMat = new THREE.LineBasicMaterial({ color: 0xd4a64a });
-let die = null;
-let restTilt = null;                            // the die's resting angle, where every roll ends
-let dieRadius = 1.3;                            // how far the die reaches from its center
+let dice = [];                                  // one entry per die on the table
+let shared = null;                              // the shape and outline, shared by every die
+let restTilt = null;                            // resting angle, where every roll ends
+let reach = 1;                                  // how far a die reaches from its center (for walls)
+let radius = 1;                                 // a die's size when bumping into other dice
+let shown = "";                                 // which dice are on the table, e.g. "3d6"
 
-function setShape(sides) {
-  if (die) {                                    // remove the old die and free its memory
-    scene.remove(die);
-    die.children.forEach(part => part.geometry.dispose());
-  }
+function setDice(sides, count) {
+  const key = `${count}d${sides}`;
+  if (key === shown) return;                    // e.g. changing the modifier doesn't need new dice
+  shown = key;
+  cancelAnimationFrame(rollFrame);              // stop any roll in progress
+  dice.forEach(d => scene.remove(d.group));     // clear the old dice and free their memory
+  if (shared) { shared.geo.dispose(); shared.edges.dispose(); }
+
   const geo = SHAPES[sides]();
   geo.computeBoundingSphere();                  // the smallest ball that fits around the die
-  dieRadius = geo.boundingSphere.radius;
-  die = new THREE.Group();
-  die.add(new THREE.Mesh(geo, sides === 100 ? ballMat : bodyMat));    // the solid body
-  die.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 10), edgeMat)); // the outlines
-  const tilt = sides === 4 ? [0.45, -0.52, 0] : [0.5, 0.6, 0];        // d4: look down at the point from slightly above
-  die.rotation.set(...tilt);                    // tilt it so it looks 3D, not flat-on
-  restTilt = die.quaternion.clone();
-  scene.add(die);
+  shared = { geo, edges: new THREE.EdgesGeometry(geo, 10) };
+
+  // Shrink the dice when there are lots of them, so they cover about 30% of the table
+  const w = walls(), r0 = geo.boundingSphere.radius;
+  const scale = Math.min(1, Math.sqrt((w.x * w.y * 4 * 0.3) / (count * Math.PI * r0 * r0)));
+  reach = r0 * scale;
+  radius = reach * 0.85;                        // a little less, so dice can get close like real ones
+
+  const tilt = sides === 4 ? [0.45, -0.52, 0] : [0.5, 0.6, 0];        // d4: an edge toward you, seen from slightly above
+  restTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(...tilt));
+
+  dice = Array.from({ length: count }, () => {
+    const group = new THREE.Group();
+    group.add(new THREE.Mesh(geo, sides === 100 ? ballMat : bodyMat));  // the solid body
+    group.add(new THREE.LineSegments(shared.edges, edgeMat));           // the outlines
+    group.scale.setScalar(scale);
+    group.quaternion.copy(restTilt);
+    scene.add(group);
+    return { group, vx: 0, vy: 0 };             // vx, vy: speed sideways and up/down
+  });
+  lineUp();
   renderer.render(scene, camera);
 }
 
-// --- Rolling: spin the die a few times, slowing down until it settles at its resting angle
+// --- Line the dice up in neat, centered rows (when they first appear)
+function lineUp() {
+  const gap = reach * 2.2;
+  const perRow = Math.max(1, Math.floor((walls().x * 2) / gap));
+  const rows = Math.ceil(dice.length / perRow);
+  dice.forEach((d, i) => {
+    const row = Math.floor(i / perRow), col = i % perRow;
+    const inRow = Math.min(perRow, dice.length - row * perRow);
+    d.group.position.set((col - (inRow - 1) / 2) * gap, ((rows - 1) / 2 - row) * gap, 0);
+  });
+}
+
+const BOUNCE = 0.8;                             // how much speed survives a bounce (1 = perfectly bouncy)
+
+// --- One small physics step: move, slow down, bounce off walls, then bounce off each other
+function step(dt, friction, edge) {
+  const drag = Math.exp(-friction * dt);        // friction: lose a little speed every step
+  for (const d of dice) {
+    const p = d.group.position;
+    d.vx *= drag; d.vy *= drag;
+    p.x += d.vx * dt; p.y += d.vy * dt;
+    if (p.x < -edge.x) { p.x = -edge.x; d.vx =  Math.abs(d.vx) * BOUNCE; }   // left wall
+    if (p.x >  edge.x) { p.x =  edge.x; d.vx = -Math.abs(d.vx) * BOUNCE; }   // right wall
+    if (p.y < -edge.y) { p.y = -edge.y; d.vy =  Math.abs(d.vy) * BOUNCE; }   // bottom
+    if (p.y >  edge.y) { p.y =  edge.y; d.vy = -Math.abs(d.vy) * BOUNCE; }   // top
+  }
+  for (let i = 0; i < dice.length; i++) {       // check every pair of dice once
+    for (let j = i + 1; j < dice.length; j++) {
+      const a = dice[i], b = dice[j];
+      const pa = a.group.position, pb = b.group.position;
+      const dx = pb.x - pa.x, dy = pb.y - pa.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist >= radius * 2) continue;         // not touching, nothing to do
+      const nx = dist ? dx / dist : 1, ny = dist ? dy / dist : 0;  // direction from a to b
+      const push = (radius * 2 - dist) / 2;     // move each half the overlap, so they just touch
+      pa.x -= nx * push; pa.y -= ny * push;
+      pb.x += nx * push; pb.y += ny * push;
+      const closing = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;  // how fast they're heading into each other
+      if (closing > 0) {                        // only bounce if they're moving together, not apart
+        const kick = closing * (1 + BOUNCE) / 2;  // equal-weight dice share the hit
+        a.vx -= kick * nx; a.vy -= kick * ny;
+        b.vx += kick * nx; b.vy += kick * ny;
+      }
+    }
+  }
+}
+
+// --- Rolling: throw every die, let the physics run, and spin each one down to its resting angle
 let rollFrame = null;
 function roll(duration) {
   cancelAnimationFrame(rollFrame);              // stop any roll already in progress
-  const axis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); // random tumble direction
-  const turns = (4 + Math.random() * 2) * Math.PI * 2;  // 4 to 6 full spins
+  const w = walls();
+  const edge = { x: Math.max(0, w.x - reach - 0.1), y: Math.max(0, w.y - reach - 0.1) };
+  const friction = duration ? 6000 / duration : 0;  // tuned so dice are nearly still when time's up
+  dice.forEach(d => {
+    const angle = Math.random() * Math.PI * 2;  // a random direction...
+    const speed = 10 + Math.random() * 6;       // ...and speed, in 3D units per second
+    d.vx = Math.cos(angle) * speed;
+    d.vy = Math.sin(angle) * speed;
+    d.axis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+    d.turns = (4 + Math.random() * 2) * Math.PI * 2;  // 4 to 6 full spins
+    d.hop = Math.random() * Math.PI;            // each die hops a little out of step with the others
+  });
   const spin = new THREE.Quaternion();
-  const { x: Lx, y: Ly } = bounds();            // the walls, measured when the roll starts
-  const dirX = Math.random() < 0.5 ? -1 : 1;    // throw it left or right...
-  const dirY = Math.random() < 0.5 ? -1 : 1;    // ...and up or down
   const start = performance.now();
+  let last = start;
   const frame = now => {
     const t = duration ? Math.min(1, (now - start) / duration) : 1;  // goes from 0 to 1 over the roll
+    const dt = Math.min(now - last, 50) / 1000; // seconds since the last frame (capped if the tab was hidden)
+    last = now;
+    for (let s = 0; s < 4; s++) step(dt / 4, friction, edge);  // 4 small steps, so fast dice don't pass through each other
     const slow = 1 - (1 - t) ** 3;              // "ease-out": fast at first, then slows down
-    spin.setFromAxisAngle(axis, turns * (1 - slow));  // how much spinning is left
-    die.quaternion.copy(restTilt).multiply(spin);     // resting angle + leftover spin
-    die.position.x = bounce(dirX * 4 * Lx * slow, Lx);  // one side wall, the other side wall, back to center
-    die.position.y = bounce(dirY * 2 * Ly * slow, Ly);  // the top or bottom edge, back to center
-    die.position.z = Math.abs(Math.sin(t * Math.PI * 3)) * (1 - t) * 0.8;  // hops toward you, each smaller
+    dice.forEach(d => {
+      spin.setFromAxisAngle(d.axis, d.turns * (1 - slow));  // how much spinning is left
+      d.group.quaternion.copy(restTilt).multiply(spin);     // resting angle + leftover spin
+      d.group.position.z = Math.abs(Math.sin(t * Math.PI * 3 + d.hop)) * (1 - t) * Math.min(1, t * 8) * 0.8;  // hops toward you, each smaller
+    });
     renderer.render(scene, camera);
     if (t < 1) rollFrame = requestAnimationFrame(frame);  // ask the browser for the next frame
   };
@@ -605,8 +675,8 @@ function roll(duration) {
 }
 
 document.addEventListener("die:roll", e => roll(e.detail.duration));
-document.addEventListener("tray:change", e => setShape(e.detail.sides));
-setShape(20);                                   // the tray starts on d20
+document.addEventListener("tray:change", e => setDice(e.detail.sides, e.detail.count));
+setDice(20, 1);                                 // the tray starts on one d20
 </script>
 </body>
 </html>
