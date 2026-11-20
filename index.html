@@ -70,6 +70,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 
 .result { border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; overflow: hidden; }
 .result .total { font-family: var(--display); font-size: 4.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+#dieCanvas { width: 140px; height: 140px; align-self: center; }
 .result .formula { color: var(--dim); font-size: .95rem; font-variant-numeric: tabular-nums; }
 .result .tag { align-self: center; font-family: var(--display); font-size: .8rem; font-weight: 800; letter-spacing: .14em; padding: 3px 10px; border-radius: 999px; }
 .result.crit { border-color: var(--brass); border-style: solid; box-shadow: 0 0 0 1px var(--brass), 0 0 40px -8px var(--brass) inset; }
@@ -189,6 +190,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     <button class="roll-btn" id="rollBtn" type="button">Roll</button>
 
     <div class="result" id="result" aria-live="polite">
+      <canvas id="dieCanvas" aria-hidden="true"></canvas>
       <span class="tag" id="tag" hidden></span>
       <div class="total" id="total">20</div>
       <div class="formula" id="formula">Example roll · pick your dice and hit Roll</div>
@@ -292,6 +294,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
       b.setAttribute("aria-pressed", b.dataset.mode === tray.mode);
     });
     $("pickedLabel").textContent = `${tray.count}d${tray.sides}${tray.mod ? " " + fmtMod(tray.mod) : ""}${tray.mode === "adv" ? " · advantage" : tray.mode === "dis" ? " · disadvantage" : ""}`;
+    document.dispatchEvent(new CustomEvent("tray:change", { detail: { sides: tray.sides } }));
   }
 
   function doRoll() {
@@ -474,6 +477,89 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
 
   syncTray(); renderParty(); renderLog();
 })();
+</script>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from "three";
+
+// --- Setup: renderer (draws), scene (holds objects), camera (viewpoint), lights
+const canvas = document.getElementById("dieCanvas");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(140, 140, false);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 0, 6);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+keyLight.position.set(3, 4, 5);
+scene.add(keyLight);
+
+// --- d10 has no built-in shape, so we build it from points (a "pentagonal trapezohedron")
+function d10Geometry() {
+  const H = 1.2, R = 1.1;                       // tip height, ring radius
+  const c = Math.cos(Math.PI / 5);
+  const h = H * (1 - c) / (1 + c);              // ring zig-zag height that keeps each face flat
+  const top = [0, H, 0], bottom = [0, -H, 0];
+  const ring = [];
+  for (let i = 0; i < 10; i++) {
+    const a = i * Math.PI / 5;
+    ring.push([Math.cos(a) * R, i % 2 ? -h : h, Math.sin(a) * R]);
+  }
+  const tris = [];
+  for (let k = 0; k < 5; k++) {
+    const u0 = ring[2 * k], l = ring[2 * k + 1], u1 = ring[(2 * k + 2) % 10];
+    tris.push(top, u1, l, top, l, u0);          // upper face (two triangles)
+    const l0 = ring[2 * k + 1], u = ring[(2 * k + 2) % 10], l1 = ring[(2 * k + 3) % 10];
+    tris.push(bottom, l0, u, bottom, u, l1);    // lower face (two triangles)
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(tris.flat(), 3));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+// --- One shape per die type
+const SHAPES = {
+  4:   () => new THREE.TetrahedronGeometry(1.5)
+             .rotateY(Math.PI / 4)              // turn a corner to face sideways...
+             .rotateZ(Math.atan(Math.SQRT2)),   // ...then tip it so that corner points straight up
+  6:   () => new THREE.BoxGeometry(1.5, 1.5, 1.5),
+  8:   () => new THREE.OctahedronGeometry(1.25),
+  10:  d10Geometry,
+  12:  () => new THREE.DodecahedronGeometry(1.2),
+  20:  () => new THREE.IcosahedronGeometry(1.25),
+  100: () => new THREE.SphereGeometry(1.2, 48, 32)  // round "ball" d100
+};
+
+// --- Dark body with brass edges, to match the page
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2440, roughness: 0.5, flatShading: true });
+const ballMat = bodyMat.clone(); ballMat.flatShading = false;      // same color, smooth for the ball
+const edgeMat = new THREE.LineBasicMaterial({ color: 0xd4a64a });
+let die = null;
+
+function setShape(sides) {
+  if (die) {                                    // remove the old die and free its memory
+    scene.remove(die);
+    die.children.forEach(part => part.geometry.dispose());
+  }
+  const geo = SHAPES[sides]();
+  die = new THREE.Group();
+  die.add(new THREE.Mesh(geo, sides === 100 ? ballMat : bodyMat));    // the solid body
+  die.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 10), edgeMat)); // the outlines
+  const tilt = sides === 4 ? [0.45, -0.52, 0] : [0.5, 0.6, 0];        // d4: look down at the point from slightly above
+  die.rotation.set(...tilt);                    // tilt it so it looks 3D, not flat-on
+  scene.add(die);
+  renderer.render(scene, camera);
+}
+
+document.addEventListener("tray:change", e => setShape(e.detail.sides));
+setShape(20);                                   // the tray starts on d20
 </script>
 </body>
 </html>
