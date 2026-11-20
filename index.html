@@ -67,6 +67,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 
 .roll-btn { background: var(--brass); color: var(--ink); border: 0; border-radius: 10px; padding: 14px; font-family: var(--display); font-weight: 800; font-size: 1.15rem; letter-spacing: .08em; }
 .roll-btn:hover { filter: brightness(1.08); }
+.roll-btn:disabled { opacity: .6; cursor: wait; }
 
 .result { border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; overflow: hidden; }
 .result .total { font-family: var(--display); font-size: 4.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -79,7 +80,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 .result.fumble { border-color: var(--crimson); border-style: solid; box-shadow: 0 0 40px -10px var(--crimson) inset; }
 .result.fumble .total { color: var(--crimson); }
 .result.fumble .tag { background: var(--crimson); color: var(--ink); }
-.result.rolling .total { opacity: .6; }
+.result.rolling .total { visibility: hidden; }
 .kept { color: var(--parch); font-weight: 700; }
 .dropped { text-decoration: line-through; opacity: .5; }
 
@@ -135,8 +136,6 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
 .log li.fumble b { color: var(--crimson); }
 .empty { color: var(--dim); font-style: italic; margin: 0; }
 
-@keyframes shake { 0%,100% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-3px,1px) rotate(-2deg); } 50% { transform: translate(3px,-1px) rotate(2deg); } 75% { transform: translate(-2px,0) rotate(-1deg); } }
-.result.rolling .total { animation: shake .12s linear infinite; }
 @keyframes flare { from { transform: scale(1.35); } to { transform: scale(1); } }
 .result.crit .total, .result.fumble .total { animation: flare .35s ease-out; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
@@ -325,22 +324,16 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     return p ? p : null;
   }
 
+  const ROLL_MS = 2000;                           // how long the die tumbles, in milliseconds
   $("rollBtn").onclick = () => {
-    const r = doRoll();
-    const res = $("result");
-    res.className = "result rolling";
-    $("tag").hidden = true;
+    const r = doRoll();                           // the result is decided right away...
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let ticks = reduce ? 0 : 9;
-    const tick = () => {
-      if (ticks-- > 0) {
-        $("total").textContent = d(tray.sides * tray.count) + tray.mod;
-        setTimeout(tick, 45);
-        return;
-      }
-      showRoll(r);
-    };
-    tick();
+    const wait = reduce ? 0 : ROLL_MS;            // no tumble for people who turn animations off
+    $("result").className = "result rolling";
+    $("tag").hidden = true;
+    $("rollBtn").disabled = true;
+    document.dispatchEvent(new CustomEvent("die:roll", { detail: { duration: wait } }));
+    setTimeout(() => { showRoll(r); $("rollBtn").disabled = false; }, wait); // ...and shown when the die lands
   };
 
   function showRoll(r) {
@@ -542,6 +535,7 @@ const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2440, roughness: 0.5
 const ballMat = bodyMat.clone(); ballMat.flatShading = false;      // same color, smooth for the ball
 const edgeMat = new THREE.LineBasicMaterial({ color: 0xd4a64a });
 let die = null;
+let restTilt = null;                            // the die's resting angle, where every roll ends
 
 function setShape(sides) {
   if (die) {                                    // remove the old die and free its memory
@@ -554,10 +548,32 @@ function setShape(sides) {
   die.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 10), edgeMat)); // the outlines
   const tilt = sides === 4 ? [0.45, -0.52, 0] : [0.5, 0.6, 0];        // d4: look down at the point from slightly above
   die.rotation.set(...tilt);                    // tilt it so it looks 3D, not flat-on
+  restTilt = die.quaternion.clone();
   scene.add(die);
   renderer.render(scene, camera);
 }
 
+// --- Rolling: spin the die a few times, slowing down until it settles at its resting angle
+let rollFrame = null;
+function roll(duration) {
+  cancelAnimationFrame(rollFrame);              // stop any roll already in progress
+  const axis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); // random tumble direction
+  const turns = (2 + Math.random()) * Math.PI * 2;  // 2 to 3 full spins
+  const spin = new THREE.Quaternion();
+  const start = performance.now();
+  const frame = now => {
+    const t = duration ? Math.min(1, (now - start) / duration) : 1;  // goes from 0 to 1 over the roll
+    const slow = 1 - (1 - t) ** 3;              // "ease-out": fast at first, then slows down
+    spin.setFromAxisAngle(axis, turns * (1 - slow));  // how much spinning is left
+    die.quaternion.copy(restTilt).multiply(spin);     // resting angle + leftover spin
+    die.position.y = Math.abs(Math.sin(t * Math.PI * 3)) * (1 - t) * 0.35;  // three hops, each smaller
+    renderer.render(scene, camera);
+    if (t < 1) rollFrame = requestAnimationFrame(frame);  // ask the browser for the next frame
+  };
+  rollFrame = requestAnimationFrame(frame);
+}
+
+document.addEventListener("die:roll", e => roll(e.detail.duration));
 document.addEventListener("tray:change", e => setShape(e.detail.sides));
 setShape(20);                                   // the tray starts on d20
 </script>
