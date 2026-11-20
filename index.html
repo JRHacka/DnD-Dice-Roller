@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tavern Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a candlelit table at night. Dice tray on the left, the party in initiative order on the right, the roll log underneath. Single dark theme by choice. */
+:root {
+  --ink: #12141c;        /* table */
+  --slate: #1c2030;      /* panels */
+  --line: #2f3550;       /* borders */
+  --parch: #e9e1cc;      /* text */
+  --dim: #9a9cae;        /* secondary text */
+  --brass: #d4a64a;      /* accent */
+  --crimson: #d2484b;    /* damage / nat 1 */
+  --verdant: #5fb37f;    /* healing / success */
+  --display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --body: "Alegreya Sans", "Gill Sans", "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--ink); color: var(--parch); font-family: var(--body); font-size: 16px; line-height: 1.45; }
+body { background: radial-gradient(ellipse at 30% -10%, #2a2440 0%, transparent 55%), var(--ink); min-height: 100%; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: .04em; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px max(16px, 3vw) 8px; }
+header h1 { font-size: 1.7rem; color: var(--brass); font-weight: 800; }
+header p { margin: 0; color: var(--dim); font-size: .95rem; }
+
+main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px; padding: 12px max(16px, 3vw) 32px; }
+@media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--slate); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel h2 { font-size: 1.05rem; color: var(--brass); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.sub { color: var(--dim); font-size: .85rem; font-family: var(--body); letter-spacing: 0; font-weight: 500; }
+
+/* Dice tray */
+.dice { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 480px) { .dice { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.die { background: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: border-color .15s, transform .1s; }
+.die svg { width: 30px; height: 30px; }
+.die span { font-weight: 700; font-size: .9rem; }
+.die[aria-pressed="true"] { border-color: var(--brass); background: #2a2616; }
+.die[aria-pressed="true"] svg path, .die[aria-pressed="true"] svg polygon, .die[aria-pressed="true"] svg rect, .die[aria-pressed="true"] svg circle { stroke: var(--brass); }
+.die:active { transform: scale(.96); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--dim); }
+.field input, .field select { background: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--ink); }
+.stepper button { background: none; border: 0; width: 34px; height: 38px; font-size: 1.1rem; color: var(--brass); }
+.stepper output { min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--parch); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { background: var(--ink); border: 0; padding: 9px 11px; font-size: .85rem; color: var(--dim); }
+.seg button[aria-pressed="true"] { background: var(--brass); color: var(--ink); font-weight: 700; }
+.seg button:disabled { opacity: .35; cursor: not-allowed; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > .field { flex: 1 1 160px; }
+
+.roll-btn { background: var(--brass); color: var(--ink); border: 0; border-radius: 10px; padding: 14px; font-family: var(--display); font-weight: 800; font-size: 1.15rem; letter-spacing: .08em; }
+.roll-btn:hover { filter: brightness(1.08); }
+
+.result { border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; overflow: hidden; }
+.result .total { font-family: var(--display); font-size: 4.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.result .formula { color: var(--dim); font-size: .95rem; font-variant-numeric: tabular-nums; }
+.result .tag { align-self: center; font-family: var(--display); font-size: .8rem; font-weight: 800; letter-spacing: .14em; padding: 3px 10px; border-radius: 999px; }
+.result.crit { border-color: var(--brass); border-style: solid; box-shadow: 0 0 0 1px var(--brass), 0 0 40px -8px var(--brass) inset; }
+.result.crit .total { color: var(--brass); }
+.result.crit .tag { background: var(--brass); color: var(--ink); }
+.result.fumble { border-color: var(--crimson); border-style: solid; box-shadow: 0 0 40px -10px var(--crimson) inset; }
+.result.fumble .total { color: var(--crimson); }
+.result.fumble .tag { background: var(--crimson); color: var(--ink); }
+.result.rolling .total { opacity: .6; }
+.kept { color: var(--parch); font-weight: 700; }
+.dropped { text-decoration: line-through; opacity: .5; }
+
+.dm { border-left: 3px solid var(--brass); background: var(--ink); border-radius: 0 10px 10px 0; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.dm p { margin: 0; font-style: italic; min-height: 1.4em; }
+.dm .who { font-family: var(--display); font-size: .78rem; color: var(--brass); letter-spacing: .12em; }
+.ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; color: var(--parch); font-size: .9rem; }
+.ghost:hover { border-color: var(--brass); }
+
+/* Party */
+.combatbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.round { font-family: var(--display); font-size: .9rem; color: var(--parch); margin-left: auto; font-variant-numeric: tabular-nums; }
+.cards { display: flex; flex-direction: column; gap: 10px; }
+.card { background: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; position: relative; }
+.card.monster { border-left: 4px solid var(--crimson); }
+.card.current { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); }
+.card.current::before { content: "▶"; position: absolute; left: -14px; color: var(--brass); font-size: .8rem; }
+.card.down { opacity: .55; }
+.init { grid-row: span 2; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--brass); }
+.name { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
+.name small { color: var(--dim); font-weight: 400; font-size: .85rem; }
+.ac { grid-row: span 2; text-align: center; font-size: .7rem; color: var(--dim); }
+.ac b { display: block; font-family: var(--display); font-size: 1.2rem; color: var(--parch); }
+.hpline { display: flex; align-items: center; gap: 10px; }
+.hpbar { flex: 1; height: 8px; background: #2a2e40; border-radius: 99px; overflow: hidden; }
+.hpbar i { display: block; height: 100%; background: var(--verdant); transition: width .3s; }
+.hpbar i.mid { background: var(--brass); }
+.hpbar i.low { background: var(--crimson); }
+.hptext { font-variant-numeric: tabular-nums; font-size: .9rem; min-width: 64px; text-align: right; }
+.cardctl { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.cardctl input { width: 58px; background: var(--slate); border: 1px solid var(--line); border-radius: 6px; padding: 5px 6px; text-align: center; }
+.mini { background: var(--slate); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; font-size: .82rem; }
+.mini.hit { color: var(--crimson); }
+.mini.heal { color: var(--verdant); }
+.mini:hover { border-color: var(--parch); }
+.cardctl select { background: var(--slate); border: 1px solid var(--line); border-radius: 6px; padding: 5px 6px; font-size: .82rem; color: var(--dim); }
+.chip { background: #33293d; border: 0; border-radius: 99px; padding: 3px 9px; font-size: .75rem; color: #e4c9f2; }
+.chip.downchip { background: var(--crimson); color: var(--ink); font-weight: 700; }
+.chip:hover { text-decoration: line-through; }
+.del { margin-left: auto; background: none; border: 0; color: var(--dim); font-size: .8rem; }
+.del:hover { color: var(--crimson); }
+
+details.add { border: 1px dashed var(--line); border-radius: 12px; padding: 10px 14px; }
+details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
+.addgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 12px; align-items: end; }
+.addgrid .wide { grid-column: span 2; }
+.check { flex-direction: row; align-items: center; gap: 6px; color: var(--parch); font-size: .9rem; }
+
+/* Log */
+.log { grid-column: 1 / -1; }
+.log ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.log li { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 6px 10px; border-radius: 8px; background: var(--ink); font-size: .92rem; }
+.log li time { color: var(--dim); font-variant-numeric: tabular-nums; font-size: .8rem; }
+.log li b { font-variant-numeric: tabular-nums; font-family: var(--display); }
+.log li.crit b { color: var(--brass); }
+.log li.fumble b { color: var(--crimson); }
+.log li .story { grid-column: 2 / -1; color: var(--dim); font-style: italic; font-size: .88rem; }
+.empty { color: var(--dim); font-style: italic; margin: 0; }
+
+@keyframes shake { 0%,100% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-3px,1px) rotate(-2deg); } 50% { transform: translate(3px,-1px) rotate(2deg); } 75% { transform: translate(-2px,0) rotate(-1deg); } }
+.result.rolling .total { animation: shake .12s linear infinite; }
+@keyframes flare { from { transform: scale(1.35); } to { transform: scale(1); } }
+.result.crit .total, .result.fumble .total { animation: flare .35s ease-out; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Tavern Table</h1>
+  <p>Roll dice, track the party, and let the DM tell you how it went.</p>
+</header>
+
+<main>
+  <!-- DICE TRAY -->
+  <section class="panel" aria-labelledby="tray-h">
+    <h2 id="tray-h">Dice tray <span class="sub" id="pickedLabel">1d20</span></h2>
+    <div class="dice" id="dice" role="group" aria-label="Choose a die"></div>
+
+    <div class="controls">
+      <div class="field">How many
+        <div class="stepper">
+          <button type="button" id="countDown" aria-label="Fewer dice">−</button>
+          <output id="count">1</output>
+          <button type="button" id="countUp" aria-label="More dice">+</button>
+        </div>
+      </div>
+      <div class="field">Modifier
+        <div class="stepper">
+          <button type="button" id="modDown" aria-label="Lower modifier">−</button>
+          <output id="mod">+0</output>
+          <button type="button" id="modUp" aria-label="Raise modifier">+</button>
+        </div>
+      </div>
+      <div class="field">d20 mode
+        <div class="seg" id="mode" role="group" aria-label="Advantage">
+          <button type="button" data-mode="dis" aria-pressed="false">Disadv.</button>
+          <button type="button" data-mode="norm" aria-pressed="true">Normal</button>
+          <button type="button" data-mode="adv" aria-pressed="false">Adv.</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <label class="field" for="roller">Who's rolling?
+        <select id="roller"></select>
+      </label>
+      <label class="field" for="action">What are they trying to do?
+        <input id="action" type="text" placeholder="Pick the lock on the crypt door" autocomplete="off">
+      </label>
+    </div>
+
+    <button class="roll-btn" id="rollBtn" type="button">Roll</button>
+
+    <div class="result" id="result" aria-live="polite">
+      <span class="tag" id="tag" hidden></span>
+      <div class="total" id="total">20</div>
+      <div class="formula" id="formula">Example roll · pick your dice and hit Roll</div>
+    </div>
+
+    <div class="dm">
+      <span class="who">THE DUNGEON MASTER</span>
+      <p id="story">The candles gutter as the party gathers round the table. Roll when you're ready.</p>
+    </div>
+  </section>
+
+  <!-- PARTY / INITIATIVE -->
+  <section class="panel" aria-labelledby="party-h">
+    <h2 id="party-h">Party &amp; initiative <span class="sub" id="partyCount"></span></h2>
+    <div class="combatbar">
+      <button class="ghost" id="rollInit" type="button">Roll initiative</button>
+      <button class="ghost" id="nextTurn" type="button" hidden>Next turn</button>
+      <button class="ghost" id="endCombat" type="button" hidden>End combat</button>
+      <button class="ghost" id="longRest" type="button">Long rest</button>
+      <span class="round" id="round"></span>
+    </div>
+    <div class="cards" id="cards"></div>
+
+    <details class="add">
+      <summary>Add a hero or monster</summary>
+      <form id="addForm" class="addgrid">
+        <label class="field wide" for="fName">Name<input id="fName" required placeholder="Goblin Boss"></label>
+        <label class="field" for="fCls">Class / type<input id="fCls" placeholder="Fighter"></label>
+        <label class="field" for="fLvl">Level / CR<input id="fLvl" type="number" value="1" min="0"></label>
+        <label class="field" for="fHp">Max HP<input id="fHp" type="number" value="10" min="1" required></label>
+        <label class="field" for="fAc">AC<input id="fAc" type="number" value="12" min="1"></label>
+        <label class="field" for="fInit">Init mod<input id="fInit" type="number" value="0"></label>
+        <label class="field check" for="fMon"><input id="fMon" type="checkbox"> Monster</label>
+        <button class="mini" type="submit">Add</button>
+      </form>
+    </details>
+  </section>
+
+  <!-- LOG -->
+  <section class="panel log" aria-labelledby="log-h">
+    <h2 id="log-h">Roll log <button class="ghost" id="clearLog" type="button">Clear</button></h2>
+    <ol id="log"></ol>
+  </section>
+</main>
+
+<script>
+(() => {
+  const SIDES = [4, 6, 8, 10, 12, 20, 100];
+  const ICONS = {
+    4: '<polygon points="15,3 28,26 2,26" fill="none" stroke="#9a9cae" stroke-width="1.8"/>',
+    6: '<rect x="4" y="4" width="22" height="22" rx="3" fill="none" stroke="#9a9cae" stroke-width="1.8"/>',
+    8: '<polygon points="15,2 28,15 15,28 2,15" fill="none" stroke="#9a9cae" stroke-width="1.8"/>',
+    10: '<polygon points="15,2 27,12 15,28 3,12" fill="none" stroke="#9a9cae" stroke-width="1.8"/>',
+    12: '<polygon points="15,2 27,10 23,26 7,26 3,10" fill="none" stroke="#9a9cae" stroke-width="1.8"/>',
+    20: '<polygon points="15,2 27,9 27,21 15,28 3,21 3,9" fill="none" stroke="#9a9cae" stroke-width="1.8"/><path d="M15 2 L9 18 L21 18 Z M3 9 L9 18 M27 9 L21 18 M15 28 L9 18 M15 28 L21 18" fill="none" stroke="#9a9cae" stroke-width="1"/>',
+    100: '<circle cx="15" cy="15" r="12" fill="none" stroke="#9a9cae" stroke-width="1.8"/>'
+  };
+  const CONDITIONS = ["Blinded","Charmed","Concentrating","Frightened","Grappled","Incapacitated","Invisible","Paralyzed","Poisoned","Prone","Restrained","Stunned"];
+  const STORE = "tavern-table-v1";
+
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const d = n => 1 + Math.floor(Math.random() * n);
+  const fmtMod = m => (m >= 0 ? "+" : "−") + Math.abs(m);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // Example party so the table opens ready to play
+  const EXAMPLE = [
+    { id: uid(), name: "Brannoc", cls: "Fighter", lvl: 5, hp: 44, maxhp: 44, ac: 18, init: 1, conds: [], monster: false },
+    { id: uid(), name: "Ysolde", cls: "Cleric", lvl: 5, hp: 31, maxhp: 38, ac: 17, init: 0, conds: ["Concentrating"], monster: false },
+    { id: uid(), name: "Pip Thistlewick", cls: "Rogue", lvl: 5, hp: 33, maxhp: 33, ac: 15, init: 4, conds: [], monster: false },
+    { id: uid(), name: "Maelis", cls: "Wizard", lvl: 5, hp: 12, maxhp: 27, ac: 12, init: 2, conds: [], monster: false },
+    { id: uid(), name: "Goblin Boss", cls: "Goblinoid", lvl: 1, hp: 21, maxhp: 21, ac: 17, init: 2, conds: [], monster: true }
+  ];
+
+  let state = { party: EXAMPLE, combat: null, log: [] };
+  try { const saved = JSON.parse(localStorage.getItem(STORE)); if (saved && Array.isArray(saved.party)) state = saved; } catch (e) {}
+  const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
+
+  const tray = { sides: 20, count: 1, mod: 0, mode: "norm" };
+  const $ = id => document.getElementById(id);
+
+  /* ---------- Dice tray ---------- */
+  $("dice").innerHTML = SIDES.map(s => `<button type="button" class="die" data-s="${s}" aria-pressed="${s === 20}"><svg viewBox="0 0 30 30" aria-hidden="true">${ICONS[s]}</svg><span>d${s}</span></button>`).join("");
+  $("dice").addEventListener("click", e => {
+    const b = e.target.closest(".die"); if (!b) return;
+    tray.sides = +b.dataset.s; syncTray();
+  });
+  $("countUp").onclick = () => { tray.count = Math.min(20, tray.count + 1); syncTray(); };
+  $("countDown").onclick = () => { tray.count = Math.max(1, tray.count - 1); syncTray(); };
+  $("modUp").onclick = () => { tray.mod = Math.min(30, tray.mod + 1); syncTray(); };
+  $("modDown").onclick = () => { tray.mod = Math.max(-10, tray.mod - 1); syncTray(); };
+  $("mode").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    tray.mode = b.dataset.mode; syncTray();
+  });
+
+  function advAllowed() { return tray.sides === 20 && tray.count === 1; }
+  function syncTray() {
+    document.querySelectorAll(".die").forEach(b => b.setAttribute("aria-pressed", +b.dataset.s === tray.sides));
+    $("count").textContent = tray.count;
+    $("mod").textContent = fmtMod(tray.mod);
+    const ok = advAllowed();
+    if (!ok) tray.mode = "norm";
+    document.querySelectorAll("#mode button").forEach(b => {
+      b.disabled = !ok && b.dataset.mode !== "norm";
+      b.setAttribute("aria-pressed", b.dataset.mode === tray.mode);
+    });
+    $("pickedLabel").textContent = `${tray.count}d${tray.sides}${tray.mod ? " " + fmtMod(tray.mod) : ""}${tray.mode === "adv" ? " · advantage" : tray.mode === "dis" ? " · disadvantage" : ""}`;
+  }
+
+  function doRoll() {
+    const { sides, count, mod, mode } = tray;
+    let dice, kept, natural = null, parts;
+    if (sides === 20 && count === 1 && mode !== "norm") {
+      const a = d(20), b = d(20);
+      kept = mode === "adv" ? Math.max(a, b) : Math.min(a, b);
+      natural = kept;
+      const keepFirst = (mode === "adv" ? a >= b : a <= b);
+      parts = `[<span class="${keepFirst ? "kept" : "dropped"}">${a}</span>, <span class="${keepFirst ? "dropped" : "kept"}">${b}</span>]`;
+      dice = [a, b];
+    } else {
+      dice = Array.from({ length: count }, () => d(sides));
+      kept = dice.reduce((s, x) => s + x, 0);
+      if (sides === 20 && count === 1) natural = kept;
+      parts = `[${dice.join(", ")}]`;
+    }
+    const total = kept + mod;
+    const kind = natural === 20 ? "crit" : natural === 1 ? "fumble" : "";
+    const label = `${count}d${sides}${mod ? " " + fmtMod(mod) : ""}${mode === "adv" ? " adv" : mode === "dis" ? " dis" : ""}`;
+    return { total, natural, kind, label, parts, mod, sides, count, mode };
+  }
+
+  function rollerName() {
+    const id = $("roller").value;
+    const p = state.party.find(x => x.id === id);
+    return p ? p : null;
+  }
+
+  $("rollBtn").onclick = () => {
+    const r = doRoll();
+    const res = $("result");
+    res.className = "result rolling";
+    $("tag").hidden = true;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let ticks = reduce ? 0 : 9;
+    const tick = () => {
+      if (ticks-- > 0) {
+        $("total").textContent = d(tray.sides * tray.count) + tray.mod;
+        setTimeout(tick, 45);
+        return;
+      }
+      showRoll(r);
+    };
+    tick();
+  };
+
+  function showRoll(r) {
+    const res = $("result");
+    res.className = "result " + r.kind;
+    $("total").textContent = r.total;
+    $("formula").innerHTML = `${esc(r.label)} → ${r.parts}${r.mod ? " " + fmtMod(r.mod) : ""}`;
+    const tag = $("tag");
+    if (r.kind) { tag.hidden = false; tag.textContent = r.kind === "crit" ? "NATURAL 20" : "NATURAL 1"; } else tag.hidden = true;
+
+    const who = rollerName();
+    const action = $("action").value.trim();
+    const name = who ? who.name : "Someone";
+    state.log.unshift({ id: uid(), t: Date.now(), who: name, action, label: r.label, total: r.total, kind: r.kind });
+    state.log = state.log.slice(0, 40);
+    save(); renderLog();
+
+    $("story").textContent = r.kind === "crit" ? "The dice clatter and settle on twenty. The table goes quiet." :
+      r.kind === "fumble" ? "A single pip stares up from the table. Somebody groans." :
+      `${name} rolls a ${r.total}.`;
+  }
+
+  /* ---------- Party & initiative ---------- */
+  function orderedParty() {
+    if (!state.combat) return state.party;
+    const rolls = state.combat.rolls;
+    return [...state.party].sort((a, b) => (rolls[b.id] ?? -99) - (rolls[a.id] ?? -99) || b.init - a.init);
+  }
+  function currentId() {
+    if (!state.combat) return null;
+    const o = orderedParty();
+    return o.length ? o[state.combat.turn % o.length].id : null;
+  }
+
+  function renderParty() {
+    const cur = currentId();
+    const list = orderedParty();
+    const nH = state.party.filter(p => !p.monster).length, nM = state.party.length - nH;
+    $("partyCount").textContent = `${nH} ${nH === 1 ? "hero" : "heroes"} · ${nM} ${nM === 1 ? "monster" : "monsters"}`;
+    $("cards").innerHTML = list.length ? list.map(p => {
+      const pct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxhp * 100)));
+      const cls = pct <= 25 ? "low" : pct <= 50 ? "mid" : "";
+      const initVal = state.combat ? (state.combat.rolls[p.id] ?? "–") : fmtMod(p.init);
+      const down = p.hp <= 0;
+      return `<article class="card ${p.monster ? "monster" : ""} ${p.id === cur ? "current" : ""} ${down ? "down" : ""}" data-id="${p.id}">
+        <div class="init" title="${state.combat ? "Initiative roll" : "Initiative modifier"}">${initVal}</div>
+        <div class="name">${esc(p.name)} <small>${esc(p.cls || "")}${p.lvl !== "" && p.lvl != null ? (p.monster ? " · CR " : " · Lv ") + esc(p.lvl) : ""}</small></div>
+        <div class="ac">AC<b>${p.ac}</b></div>
+        <div class="hpline"><div class="hpbar"><i class="${cls}" style="width:${pct}%"></i></div><span class="hptext">${p.hp} / ${p.maxhp}</span></div>
+        <div class="cardctl">
+          <label class="sr" for="amt-${p.id}" style="position:absolute;left:-9999px">Amount for ${esc(p.name)}</label>
+          <input id="amt-${p.id}" type="number" min="1" value="5" data-amt>
+          <button class="mini hit" type="button" data-act="hit">Damage</button>
+          <button class="mini heal" type="button" data-act="heal">Heal</button>
+          <button class="mini" type="button" data-act="use" title="Load this character's initiative mod into the dice tray">Roll as</button>
+          <select data-act="cond" aria-label="Add a condition to ${esc(p.name)}"><option value="">+ condition</option>${CONDITIONS.filter(c => !p.conds.includes(c)).map(c => `<option>${c}</option>`).join("")}</select>
+          ${down ? `<span class="chip downchip">Down</span>` : ""}
+          ${p.conds.map(c => `<button class="chip" type="button" data-cond="${esc(c)}" title="Remove ${esc(c)}">${esc(c)}</button>`).join("")}
+          <button class="del" type="button" data-act="del" aria-label="Remove ${esc(p.name)}">Remove</button>
+        </div>
+      </article>`;
+    }).join("") : `<p class="empty">The table is empty. Add a hero below.</p>`;
+
+    const inCombat = !!state.combat;
+    $("nextTurn").hidden = !inCombat;
+    $("endCombat").hidden = !inCombat;
+    $("rollInit").textContent = inCombat ? "Reroll initiative" : "Roll initiative";
+    $("round").textContent = inCombat ? `Round ${state.combat.round}` : "";
+
+    const sel = $("roller"), keep = sel.value;
+    sel.innerHTML = `<option value="">Nobody in particular</option>` + state.party.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+    sel.value = state.party.some(p => p.id === keep) ? keep : (cur || "");
+  }
+
+  $("cards").addEventListener("click", e => {
+    const card = e.target.closest(".card"); if (!card) return;
+    const p = state.party.find(x => x.id === card.dataset.id); if (!p) return;
+    const chip = e.target.closest("[data-cond]");
+    if (chip) { p.conds = p.conds.filter(c => c !== chip.dataset.cond); save(); renderParty(); return; }
+    const act = e.target.dataset.act;
+    const amt = Math.max(0, parseInt(card.querySelector("[data-amt]").value, 10) || 0);
+    if (act === "hit") p.hp = Math.max(0, p.hp - amt);
+    else if (act === "heal") p.hp = Math.min(p.maxhp, p.hp + amt);
+    else if (act === "use") {
+      $("roller").value = p.id; tray.sides = 20; tray.count = 1; tray.mod = p.init; syncTray();
+      $("action").focus(); return;
+    }
+    else if (act === "del") {
+      state.party = state.party.filter(x => x.id !== p.id);
+      if (state.combat) delete state.combat.rolls[p.id];
+    } else return;
+    save(); renderParty();
+  });
+  $("cards").addEventListener("change", e => {
+    if (e.target.dataset.act !== "cond" || !e.target.value) return;
+    const p = state.party.find(x => x.id === e.target.closest(".card").dataset.id);
+    if (p && !p.conds.includes(e.target.value)) p.conds.push(e.target.value);
+    save(); renderParty();
+  });
+
+  $("rollInit").onclick = () => {
+    const rolls = {};
+    state.party.forEach(p => { rolls[p.id] = d(20) + (+p.init || 0); });
+    state.combat = { rolls, turn: 0, round: 1 };
+    const first = orderedParty()[0];
+    $("story").textContent = first ? `Steel rings out. ${first.name} moves first.` : "Initiative rolled.";
+    save(); renderParty();
+  };
+  $("nextTurn").onclick = () => {
+    if (!state.combat) return;
+    const n = state.party.length; if (!n) return;
+    state.combat.turn += 1;
+    if (state.combat.turn % n === 0) state.combat.round += 1;
+    save(); renderParty();
+  };
+  $("endCombat").onclick = () => { state.combat = null; save(); renderParty(); };
+  $("longRest").onclick = () => {
+    state.party.forEach(p => { if (!p.monster) { p.hp = p.maxhp; p.conds = []; } });
+    $("story").textContent = "The fire burns low, the watch changes twice, and the party wakes restored.";
+    save(); renderParty();
+  };
+
+  $("addForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const maxhp = Math.max(1, parseInt($("fHp").value, 10) || 1);
+    const p = { id: uid(), name: $("fName").value.trim() || "Unnamed", cls: $("fCls").value.trim(), lvl: $("fLvl").value, hp: maxhp, maxhp,
+      ac: parseInt($("fAc").value, 10) || 10, init: parseInt($("fInit").value, 10) || 0, conds: [], monster: $("fMon").checked };
+    state.party.push(p);
+    if (state.combat) state.combat.rolls[p.id] = d(20) + p.init;
+    $("fName").value = ""; save(); renderParty();
+  });
+
+  /* ---------- Log ---------- */
+  function renderLog() {
+    $("log").innerHTML = state.log.length ? state.log.map(e => {
+      const t = new Date(e.t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      return `<li class="${e.kind}"><time>${t}</time><span>${esc(e.who)}${e.action ? " · " + esc(e.action) : ""} <span style="color:var(--dim)">(${esc(e.label)})</span></span><b>${e.total}</b>${e.story ? `<span class="story">${esc(e.story)}</span>` : ""}</li>`;
+    }).join("") : `<li><span></span><span class="empty">No rolls yet tonight.</span><span></span></li>`;
+  }
+  $("clearLog").onclick = () => { state.log = []; save(); renderLog(); };
+
+  syncTray(); renderParty(); renderLog();
+})();
+</script>
+</body>
+</html>
