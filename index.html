@@ -71,7 +71,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 
 .result { border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; overflow: hidden; }
 .result .total { font-family: var(--display); font-size: 4.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-#dieCanvas { width: 140px; height: 140px; align-self: center; }
+#dieCanvas { width: 100%; height: 200px; display: block; }
 .result .formula { color: var(--dim); font-size: .95rem; font-variant-numeric: tabular-nums; }
 .result .tag { align-self: center; font-family: var(--display); font-size: .8rem; font-weight: 800; letter-spacing: .14em; padding: 3px 10px; border-radius: 999px; }
 .result.crit { border-color: var(--brass); border-style: solid; box-shadow: 0 0 0 1px var(--brass), 0 0 40px -8px var(--brass) inset; }
@@ -482,16 +482,39 @@ import * as THREE from "three";
 const canvas = document.getElementById("dieCanvas");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(140, 140, false);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-camera.position.set(0, 0, 6);
+camera.position.set(0, 0, 8);                   // pulled back so there's room to roll around
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
 keyLight.position.set(3, 4, 5);
 scene.add(keyLight);
+
+// --- Keep the 3D view matched to the canvas size (it changes with the window width)
+function fitCanvas() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;                        // width ÷ height, so the die isn't stretched
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+}
+new ResizeObserver(fitCanvas).observe(canvas);  // run fitCanvas now and whenever the canvas resizes
+
+// --- How far the die's center can travel before its edge touches the box, in 3D units
+function bounds() {
+  const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+  const halfW = halfH * camera.aspect;
+  return { x: Math.max(0, halfW - dieRadius - 0.2), y: Math.max(0, halfH - dieRadius - 0.2) };
+}
+
+// --- Bounce a position back and forth between -L and +L, like a ball between two walls
+function bounce(p, L) {
+  if (L === 0) return 0;
+  const m = ((p + L) % (4 * L) + 4 * L) % (4 * L);
+  return m <= 2 * L ? m - L : 3 * L - m;
+}
 
 // --- d10 has no built-in shape, so we build it from points (a "pentagonal trapezohedron")
 function d10Geometry() {
@@ -536,6 +559,7 @@ const ballMat = bodyMat.clone(); ballMat.flatShading = false;      // same color
 const edgeMat = new THREE.LineBasicMaterial({ color: 0xd4a64a });
 let die = null;
 let restTilt = null;                            // the die's resting angle, where every roll ends
+let dieRadius = 1.3;                            // how far the die reaches from its center
 
 function setShape(sides) {
   if (die) {                                    // remove the old die and free its memory
@@ -543,6 +567,8 @@ function setShape(sides) {
     die.children.forEach(part => part.geometry.dispose());
   }
   const geo = SHAPES[sides]();
+  geo.computeBoundingSphere();                  // the smallest ball that fits around the die
+  dieRadius = geo.boundingSphere.radius;
   die = new THREE.Group();
   die.add(new THREE.Mesh(geo, sides === 100 ? ballMat : bodyMat));    // the solid body
   die.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 10), edgeMat)); // the outlines
@@ -558,15 +584,20 @@ let rollFrame = null;
 function roll(duration) {
   cancelAnimationFrame(rollFrame);              // stop any roll already in progress
   const axis = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); // random tumble direction
-  const turns = (2 + Math.random()) * Math.PI * 2;  // 2 to 3 full spins
+  const turns = (4 + Math.random() * 2) * Math.PI * 2;  // 4 to 6 full spins
   const spin = new THREE.Quaternion();
+  const { x: Lx, y: Ly } = bounds();            // the walls, measured when the roll starts
+  const dirX = Math.random() < 0.5 ? -1 : 1;    // throw it left or right...
+  const dirY = Math.random() < 0.5 ? -1 : 1;    // ...and up or down
   const start = performance.now();
   const frame = now => {
     const t = duration ? Math.min(1, (now - start) / duration) : 1;  // goes from 0 to 1 over the roll
     const slow = 1 - (1 - t) ** 3;              // "ease-out": fast at first, then slows down
     spin.setFromAxisAngle(axis, turns * (1 - slow));  // how much spinning is left
     die.quaternion.copy(restTilt).multiply(spin);     // resting angle + leftover spin
-    die.position.y = Math.abs(Math.sin(t * Math.PI * 3)) * (1 - t) * 0.35;  // three hops, each smaller
+    die.position.x = bounce(dirX * 4 * Lx * slow, Lx);  // one side wall, the other side wall, back to center
+    die.position.y = bounce(dirY * 2 * Ly * slow, Ly);  // the top or bottom edge, back to center
+    die.position.z = Math.abs(Math.sin(t * Math.PI * 3)) * (1 - t) * 0.8;  // hops toward you, each smaller
     renderer.render(scene, camera);
     if (t < 1) rollFrame = requestAnimationFrame(frame);  // ask the browser for the next frame
   };
