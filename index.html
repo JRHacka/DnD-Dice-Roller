@@ -30,6 +30,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 
+header, main { max-width: 1400px; margin: 0 auto; }
 header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px max(16px, 3vw) 8px; }
 header h1 { font-size: 1.7rem; color: var(--brass); font-weight: 800; }
 header p { margin: 0; color: var(--dim); font-size: .95rem; }
@@ -81,9 +82,6 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 .kept { color: var(--parch); font-weight: 700; }
 .dropped { text-decoration: line-through; opacity: .5; }
 
-.dm { border-left: 3px solid var(--brass); background: var(--ink); border-radius: 0 10px 10px 0; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
-.dm p { margin: 0; font-style: italic; min-height: 1.4em; }
-.dm .who { font-family: var(--display); font-size: .78rem; color: var(--brass); letter-spacing: .12em; }
 .ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; color: var(--parch); font-size: .9rem; }
 .ghost:hover { border-color: var(--brass); }
 
@@ -134,7 +132,6 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
 .log li b { font-variant-numeric: tabular-nums; font-family: var(--display); }
 .log li.crit b { color: var(--brass); }
 .log li.fumble b { color: var(--crimson); }
-.log li .story { grid-column: 2 / -1; color: var(--dim); font-style: italic; font-size: .88rem; }
 .empty { color: var(--dim); font-style: italic; margin: 0; }
 
 @keyframes shake { 0%,100% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-3px,1px) rotate(-2deg); } 50% { transform: translate(3px,-1px) rotate(2deg); } 75% { transform: translate(-2px,0) rotate(-1deg); } }
@@ -147,7 +144,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
 <body>
 <header>
   <h1>Tavern Table</h1>
-  <p>Roll dice, track the party, and let the DM tell you how it went.</p>
+  <p>Roll dice, track the party, and run the fight.</p>
 </header>
 
 <main>
@@ -195,11 +192,6 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
       <span class="tag" id="tag" hidden></span>
       <div class="total" id="total">20</div>
       <div class="formula" id="formula">Example roll · pick your dice and hit Roll</div>
-    </div>
-
-    <div class="dm">
-      <span class="who">THE DUNGEON MASTER</span>
-      <p id="story">The candles gutter as the party gathers round the table. Roll when you're ready.</p>
     </div>
   </section>
 
@@ -362,10 +354,6 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     state.log.unshift({ id: uid(), t: Date.now(), who: name, action, label: r.label, total: r.total, kind: r.kind });
     state.log = state.log.slice(0, 40);
     save(); renderLog();
-
-    $("story").textContent = r.kind === "crit" ? "The dice clatter and settle on twenty. The table goes quiet." :
-      r.kind === "fumble" ? "A single pip stares up from the table. Somebody groans." :
-      `${name} rolls a ${r.total}.`;
   }
 
   /* ---------- Party & initiative ---------- */
@@ -450,8 +438,6 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     const rolls = {};
     state.party.forEach(p => { rolls[p.id] = d(20) + (+p.init || 0); });
     state.combat = { rolls, turn: 0, round: 1 };
-    const first = orderedParty()[0];
-    $("story").textContent = first ? `Steel rings out. ${first.name} moves first.` : "Initiative rolled.";
     save(); renderParty();
   };
   $("nextTurn").onclick = () => {
@@ -464,7 +450,6 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
   $("endCombat").onclick = () => { state.combat = null; save(); renderParty(); };
   $("longRest").onclick = () => {
     state.party.forEach(p => { if (!p.monster) { p.hp = p.maxhp; p.conds = []; } });
-    $("story").textContent = "The fire burns low, the watch changes twice, and the party wakes restored.";
     save(); renderParty();
   };
 
@@ -482,7 +467,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
   function renderLog() {
     $("log").innerHTML = state.log.length ? state.log.map(e => {
       const t = new Date(e.t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-      return `<li class="${e.kind}"><time>${t}</time><span>${esc(e.who)}${e.action ? " · " + esc(e.action) : ""} <span style="color:var(--dim)">(${esc(e.label)})</span></span><b>${e.total}</b>${e.story ? `<span class="story">${esc(e.story)}</span>` : ""}</li>`;
+      return `<li class="${e.kind}"><time>${t}</time><span>${esc(e.who)}${e.action ? " · " + esc(e.action) : ""} <span style="color:var(--dim)">(${esc(e.label)})</span></span><b>${e.total}</b></li>`;
     }).join("") : `<li><span></span><span class="empty">No rolls yet tonight.</span><span></span></li>`;
   }
   $("clearLog").onclick = () => { state.log = []; save(); renderLog(); };
