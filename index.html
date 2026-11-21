@@ -316,7 +316,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     const total = kept + mod;
     const kind = natural === 20 ? "crit" : natural === 1 ? "fumble" : "";
     const label = `${count}d${sides}${mod ? " " + fmtMod(mod) : ""}${mode === "adv" ? " adv" : mode === "dis" ? " dis" : ""}`;
-    return { total, natural, kind, label, parts, mod, sides, count, mode };
+    return { total, natural, kind, label, parts, mod, sides, count, mode, dice };
   }
 
   function rollerName() {
@@ -333,7 +333,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     $("result").className = "result rolling";
     $("tag").hidden = true;
     $("rollBtn").disabled = true;
-    document.dispatchEvent(new CustomEvent("die:roll", { detail: { duration: wait } }));
+    document.dispatchEvent(new CustomEvent("die:roll", { detail: { duration: wait, values: r.dice } }));
     setTimeout(() => { showRoll(r); $("rollBtn").disabled = false; }, wait); // ...and shown when the die lands
   };
 
@@ -563,18 +563,99 @@ const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2440, roughness: 0.5
 const ballMat = bodyMat.clone(); ballMat.flatShading = false;      // same color, smooth for the ball
 const edgeMat = new THREE.LineBasicMaterial({ color: 0xd4a64a });
 
-// --- Find the directions the die's flat faces point (so it can land flat on one)
-function faceNormals(geo) {
+// --- Number stickers: draw a number onto a small transparent image (made once per number, then reused)
+const labelCache = new Map();
+function labelMaterial(n, underline) {
+  const key = `${n}${underline ? "_" : ""}`;
+  if (labelCache.has(key)) return labelCache.get(key);
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#d4a64a";                    // brass, like the edges
+  const digits = String(n).length;
+  ctx.font = `bold ${digits > 2 ? 54 : digits > 1 ? 70 : 84}px Georgia, serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(n, 64, 66);
+  if (underline && (n === 6 || n === 9)) ctx.fillRect(40, 106, 48, 7);  // so 6 and 9 can't be mixed up
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -1 });   // draw on top of the face without flickering
+  labelCache.set(key, mat);
+  return mat;
+}
+
+// --- Stick one number onto a die: at a point, facing out along `normal`, with its top toward `up`
+const plane = new THREE.PlaneGeometry(1, 1);    // one square shared by every sticker
+const basis = new THREE.Matrix4(), right = new THREE.Vector3();
+function addSticker(group, value, at, normal, up, size, underline) {
+  const s = new THREE.Mesh(plane, labelMaterial(value, underline));
+  right.crossVectors(up, normal);
+  s.quaternion.setFromRotationMatrix(basis.makeBasis(right, up, normal));  // aim the square
+  s.position.copy(at).addScaledVector(normal, 0.01);  // a hair above the face
+  s.scale.setScalar(size);
+  group.add(s);
+  return s;
+}
+
+// --- Work out each flat face: which way it points, its corners, its middle, and which way is "up" for its number
+function findFaces(geo, squareFaces) {
   const g = geo.index ? geo.toNonIndexed() : geo;  // get the shape as plain triangles
-  const p = g.attributes.position, found = [];
+  const p = g.attributes.position, faces = [];
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
   for (let i = 0; i < p.count; i += 3) {
     a.fromBufferAttribute(p, i); b.fromBufferAttribute(p, i + 1); c.fromBufferAttribute(p, i + 2);
-    const n = b.sub(a).cross(c.sub(a)).normalize();   // the direction this triangle faces
-    if (!found.some(m => m.dot(n) > 0.999)) found.push(n.clone());  // triangles facing the same way = one face
+    const n = b.clone().sub(a).cross(c.clone().sub(a)).normalize();   // the direction this triangle faces
+    let face = faces.find(f => f.normal.dot(n) > 0.999);              // triangles facing the same way = one face
+    if (!face) faces.push(face = { normal: n, corners: [] });
+    for (const v of [a, b, c]) if (!face.corners.some(k => k.distanceTo(v) < 1e-4)) face.corners.push(v.clone());
   }
   if (g !== geo) g.dispose();
-  return found;
+  for (const f of faces) {
+    f.center = f.corners.reduce((s, v) => s.add(v), new THREE.Vector3()).divideScalar(f.corners.length);
+    const dist = v => v.distanceTo(f.center);
+    let toward = f.corners.reduce((x, v) => dist(v) > dist(x) + 1e-4 ? v : x);  // the farthest corner
+    if (squareFaces) {                          // d6: point the number at an edge, not a corner, so it sits straight
+      const [k0, ...rest] = f.corners;
+      const k1 = rest.reduce((x, v) => v.distanceTo(k0) < x.distanceTo(k0) ? v : x);
+      toward = k0.clone().add(k1).multiplyScalar(0.5);
+    }
+    f.up = toward.clone().sub(f.center).projectOnPlane(f.normal).normalize();
+    f.size = Math.min(...f.corners.map(dist));  // how much room the number has
+  }
+  return faces;
+}
+
+// --- Number the faces like real dice: opposite faces add up to sides + 1
+function numberFaces(faces, sides) {
+  let next = 1;
+  for (const f of faces) {
+    if (f.value) continue;
+    const opposite = faces.find(o => !o.value && o !== f && o.normal.dot(f.normal) < -0.999);
+    f.value = next;
+    if (opposite) opposite.value = sides + 1 - next;
+    next++;
+  }
+}
+
+// --- A d4's four corners, numbered 1 to 4 (a d4 is read at the corner pointing up)
+function cornersOf(faces) {
+  const list = [];
+  for (const f of faces) for (const v of f.corners)
+    if (!list.some(k => k.at.distanceTo(v) < 1e-4)) list.push({ at: v, dir: v.clone().normalize(), value: list.length + 1 });
+  return list;
+}
+
+// --- Put all the numbers on one die
+function addNumbers(group, sides) {
+  const underline = sides >= 10;                // 6 and 9 look alike upside down on the bigger dice
+  if (kind === "faces") for (const f of faces) addSticker(group, f.value, f.center, f.normal, f.up, f.size * 0.85, underline);
+  if (kind === "d4") for (const f of faces) for (const v of f.corners) {   // each face shows each corner's number, near that corner
+    const toCorner = v.clone().sub(f.center);
+    const value = d4Corners.find(k => k.at.distanceTo(v) < 1e-4).value;
+    addSticker(group, value, f.center.clone().addScaledVector(toCorner, 0.5), f.normal, toCorner.clone().normalize(), f.size * 0.5, false);
+  }
 }
 
 // --- Turn a die the smallest amount that puts its lowest face flat on the table
@@ -592,6 +673,10 @@ function landFlat(q) {
 let dice = [];                                  // one entry per die on the table
 let shared = null;                              // the shape and outline, shared by every die
 let normals = [];                               // the die's face directions (empty for the ball)
+let faces = [];                                 // the die's faces, with their numbers
+let d4Corners = [];                             // a d4's corners, with their numbers
+let kind = "faces";                             // how this die shows a result: "faces", "d4" or "ball"
+let baseRadius = 1;                             // the die's size before shrinking (to place the ball's number)
 let reach = 1;                                  // how far a die reaches from its center (for walls)
 let radius = 1;                                 // a die's size when bumping into other dice
 let shown = "";                                 // which dice are on the table, e.g. "3d6"
@@ -616,12 +701,18 @@ function setDice(sides, count) {
   reach = r0 * scale;
   radius = reach * 0.85;                        // a little less, so dice can get close like real ones
 
-  normals = sides === 100 ? [] : faceNormals(geo);
+  kind = sides === 100 ? "ball" : sides === 4 ? "d4" : "faces";
+  baseRadius = r0;
+  faces = kind === "ball" ? [] : findFaces(geo, sides === 6);
+  normals = faces.map(f => f.normal);           // landFlat() still works from these
+  if (kind === "faces") numberFaces(faces, sides);
+  if (kind === "d4") d4Corners = cornersOf(faces);
 
   dice = Array.from({ length: count }, () => {
     const group = new THREE.Group();
     group.add(new THREE.Mesh(geo, sides === 100 ? ballMat : bodyMat));  // the solid body
     group.add(new THREE.LineSegments(shared.edges, edgeMat));           // the outlines
+    addNumbers(group, sides);                   // the number stickers
     group.scale.setScalar(scale);
     const randomTurn = new THREE.Euler(Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3);
     group.quaternion.copy(landFlat(new THREE.Quaternion().setFromEuler(randomTurn)));  // lying flat, random face up
@@ -701,9 +792,40 @@ function step(dt, friction, edge, tumbling) {
   }
 }
 
-// --- Rolling: toss every die, let the physics run, then tip each one onto its nearest face
+// --- The extra turn, inside the die, that puts `value` on top without changing how the roll looks
+const UP = new THREE.Vector3(0, 0, 1);
+function topFix(d, end, value) {
+  const fix = new THREE.Quaternion();
+  if (value === undefined) return fix;
+  if (kind === "ball") { placeBallNumber(d, end, value); return fix; }
+  const list = kind === "d4" ? d4Corners : faces;     // a d4 is read at its top corner, the rest at their top face
+  const dirOf = it => it.dir || it.normal;
+  const height = it => dirOf(it).clone().applyQuaternion(end.q).z;
+  const top = list.reduce((best, it) => height(it) > height(best) ? it : best);  // what ended up on top
+  const want = list.find(it => it.value === value);                              // what we rolled
+  fix.setFromUnitVectors(dirOf(want), dirOf(top));    // move the rolled number to where the top one was
+  if (kind === "faces") {                             // ...and spin it so it reads upright from where you sit
+    const v = want.up.clone().applyQuaternion(fix).applyQuaternion(end.q);
+    const twist = Math.PI / 2 - Math.atan2(v.y, v.x);
+    fix.premultiply(new THREE.Quaternion().setFromAxisAngle(dirOf(top), twist));
+  }
+  return fix;
+}
+
+// --- The ball has no faces: put one sticker where it will face you when the ball stops
+function placeBallNumber(d, end, value) {
+  if (d.sticker) d.group.remove(d.sticker);
+  const view = camera.position.clone().sub(end.p).normalize();   // from the ball toward you
+  const screenUp = UP.clone().projectOnPlane(view).normalize();  // "up" as you see it
+  const inside = end.q.clone().invert();                         // turn those directions into the ball's own
+  const n = view.applyQuaternion(inside), up = screenUp.applyQuaternion(inside);
+  d.sticker = addSticker(d.group, value, n.clone().multiplyScalar(baseRadius), n, up, baseRadius * 0.9, false);
+}
+
+// --- Rolling: work out the whole roll first, fix the numbers, then play it back
+const STEP = 1 / 240;                           // the physics runs in steps of 1/240th of a second
 let rollFrame = null;
-function roll(duration) {
+function roll(duration, values) {
   cancelAnimationFrame(rollFrame);              // stop any roll already in progress
   const w = walls(), m = reach + 0.1;
   const edge = { minX: -w.x + m, maxX: w.x - m, minY: w.yMin + m, maxY: w.yMax - m };
@@ -715,16 +837,18 @@ function roll(duration) {
     d.vy = Math.sin(angle) * speed;
     d.vz = 8 + Math.random() * 4;               // tossed up off the table
     d.settle = null;
+    d.path = [];
   });
-  const start = performance.now();
-  let last = start;
-  const frame = now => {
-    const t = duration ? Math.min(1, (now - start) / duration) : 1;  // goes from 0 to 1 over the roll
-    const dt = Math.min(now - last, 50) / 1000; // seconds since the last frame (capped if the tab was hidden)
-    last = now;
-    const friction = secs ? (0.8 + 6 * t * t) * (2 / secs) : 0;  // light at first, heavier toward the end
+
+  // 1. Simulate the whole roll right now, recording every die at every step
+  const steps = Math.round(secs / STEP);
+  const record = () => dice.forEach(d => d.path.push({ p: d.group.position.clone(), q: d.group.quaternion.clone() }));
+  record();
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;                        // goes from 0 to 1 over the roll
+    const friction = (0.8 + 6 * t * t) * (2 / secs);  // light at first, heavier toward the end
     const tumbling = t < 0.8;                   // roll freely for the first 80%...
-    for (let s = 0; s < 4; s++) step(dt / 4, friction, edge, tumbling);  // 4 small steps, so dice don't pass through each other
+    step(STEP, friction, edge, tumbling);
     if (!tumbling) {                            // ...then spend the last 20% tipping onto a face
       const k = (t - 0.8) / 0.2;
       const ease = k * k * (3 - 2 * k);         // starts and ends gently
@@ -733,14 +857,29 @@ function roll(duration) {
         d.group.quaternion.slerpQuaternions(d.settle.from, d.settle.to, ease);
       });
     }
-    if (t === 1) dice.forEach(d => { d.group.position.z = 0; d.vx = d.vy = d.vz = 0; });  // fully at rest
+    if (i === steps) dice.forEach(d => { d.group.position.z = 0; });  // fully at rest on the table
+    record();
+  }
+
+  // 2. Turn each die's numbers so what you rolled is the one that lands on top
+  dice.forEach((d, i) => {
+    const fix = topFix(d, d.path[d.path.length - 1], values?.[i]);
+    d.path.forEach(f => f.q.multiply(fix));
+  });
+
+  // 3. Play the recording back over the roll's duration
+  const start = performance.now();
+  const frame = now => {
+    const t = duration ? Math.min(1, Math.max(0, (now - start) / duration)) : 1;  // kept between 0 and 1
+    const i = Math.round(t * steps);            // the recorded step for this moment
+    dice.forEach(d => { d.group.position.copy(d.path[i].p); d.group.quaternion.copy(d.path[i].q); });
     renderer.render(scene, camera);
     if (t < 1) rollFrame = requestAnimationFrame(frame);  // ask the browser for the next frame
   };
   rollFrame = requestAnimationFrame(frame);
 }
 
-document.addEventListener("die:roll", e => roll(e.detail.duration));
+document.addEventListener("die:roll", e => roll(e.detail.duration, e.detail.values));
 document.addEventListener("tray:change", e => setDice(e.detail.sides, e.detail.count));
 setDice(20, 1);                                 // the tray starts on one d20
 </script>
