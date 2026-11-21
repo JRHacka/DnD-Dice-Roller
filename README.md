@@ -1,51 +1,106 @@
-# Tavern Table
+<div align="center">
 
-A dice roller and party tracker for tabletop RPG nights, built for 5th-edition style games. It's one HTML file: no install, no build step, and no account.
+# 🍺 Tavern Table 🎲
 
-## Getting started
+**Pull up a chair, grab your dice, and let's roll.**
 
-Open `index.html` in any modern browser. That's it.
+A candlelit dice tray and party tracker for tabletop RPG nights, built for 5th-edition style games.
 
-If you're editing the code, the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension for VS Code reloads the page every time you save.
+![Single HTML file](https://img.shields.io/badge/single%20file-index.html-d4a64a?style=flat-square)
+![No build step](https://img.shields.io/badge/build%20step-none-5fb37f?style=flat-square)
+![3D dice](https://img.shields.io/badge/3D%20dice-Three.js-1c2030?style=flat-square)
 
-## Features
+![Tavern Table: eight 3D d6s landed on the dice tray after a Fireball roll, next to the party and initiative tracker](docs/screenshot.png)
 
-### Dice tray
-- Roll d4, d6, d8, d10, d12, d20 or d100.
-- Roll up to 20 dice at once, with a modifier from −10 to +30.
-- Roll with advantage or disadvantage on a single d20. The die that's dropped is shown crossed out.
-- Natural 20s and natural 1s are highlighted.
-- Pick who's rolling and what they're trying to do, and it goes into the log.
+</div>
 
-### Party and initiative
-- Each hero or monster has HP, AC, level or CR, and an initiative modifier.
-- Apply damage or healing. HP bars change color as health drops, and characters at 0 HP are marked **Down**.
-- Add or remove conditions such as Poisoned, Prone or Concentrating.
-- Roll initiative for everyone at once, then step through turns with the current turn and round shown.
-- **Roll as** loads a character's initiative modifier into the dice tray.
-- **Long rest** restores heroes to full HP and clears their conditions. Monsters aren't affected.
+---
 
-### Roll log
-- Keeps the last 40 rolls with a timestamp, who rolled, what they were doing, and the result.
+## 🚪 Getting started
 
-## Saving
+1. Open `index.html` in any modern browser.
+2. There is no step 2. 🎉
 
-Your party, the current combat and the roll log are saved in your browser's local storage, so they survive a page refresh. A few things to know:
+No install, no build step, no account. The page does need an internet connection, because it loads the 3D library ([Three.js](https://threejs.org)) and its fonts from the web.
 
-- Data stays on the device and browser you used. Nothing is sent anywhere.
-- Opening the file directly and opening it through a local server (like Live Server) count as different sites, so each has its own saved data.
+> 🛠️ **Tinkering with the code?** The [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension for VS Code reloads the page every time you save.
+
+---
+
+## ✨ What's on the table
+
+### 🎲 Real 3D dice
+Click **Roll** and watch them go. The dice are tossed onto the table, bounce, tumble over each other, crash off the walls and settle flat, and **the number facing up is the number you rolled.**
+
+| Die | How it reads |
+|---|---|
+| d6, d8, d10, d12, d20 | The number on the top face |
+| d4 | The number at the corner pointing up, just like a real d4 |
+| d100 | A round ball that rolls to a stop with the result facing you |
+
+Roll up to **20 dice at once**. They shrink to fit and bump into each other on the way.
+
+### 🧮 The dice tray
+- Pick a die, how many, and a modifier from **−10 to +30**.
+- **Advantage and disadvantage** roll two d20s; the one you drop is crossed out.
+- **Natural 20s** glow gold. **Natural 1s** glow red. 😬
+- Say who's rolling and what they're trying (*"Pick the lock on the crypt door"*), and it goes in the log.
+
+### ⚔️ Party and initiative
+- Track every hero and monster's **HP, AC, level or CR** and **initiative modifier**.
+- Deal damage or heal. HP bars go green, then gold, then red, and anyone at 0 HP is marked **Down**.
+- Add conditions like *Poisoned*, *Prone* or *Concentrating*, and click a condition to clear it.
+- **Roll initiative** for everyone at once, then step through turns and rounds.
+- **Roll as** loads a character's initiative modifier straight into the dice tray.
+- **Long rest** brings the heroes back to full HP and clears their conditions. Monsters get no such luck. 🐉
+
+### 📜 Roll log
+The last 40 rolls: when, who, what they were attempting, and how it went.
+
+---
+
+## 💾 Saving
+
+Your party, the current fight and the roll log are saved in your browser, so they survive a refresh.
+
+- Your data stays on your device. It's never sent anywhere.
+- Opening the file directly and opening it through Live Server count as different sites, so each keeps its own save.
 - Clearing your browser's site data resets the table to the sample party.
 
-## Project structure
+---
+
+## 🔮 How the dice work (for the curious)
+
+When you click **Roll**, the result is decided first, using fair random numbers. Then:
+
+1. **The whole roll is simulated instantly**: tosses, gravity, bounces, collisions and tumbling, all recorded step by step.
+2. **The numbers are quietly rearranged** on each die, so the face that ends up on top shows what you actually rolled.
+3. **The recording plays back** over two seconds.
+
+So the dice look completely natural, and they always agree with the result. No loaded dice here.
+
+---
+
+## 🗺️ The road ahead
+
+- 🎨 **Dice skins**: colors, camo and marble
+- ⚡ **Saved roll presets**, like *Longsword 1d8+3* or *Fireball 8d6*
+- 🧾 **Typed formulas**, like `2d6+1d4+3`
+- 💀 **Death saving throws** for characters at 0 HP
+- 📋 **Fuller character sheets** with ability scores and saving throws
+
+---
+
+## 📁 What's in the box
 
 ```
-index.html   The whole app: markup, styles and script
-README.md    This file
+index.html             The whole app: markup, styles and scripts
+docs/screenshot.png    The picture at the top of this page
+README.md              You are here
 ```
 
-## Ideas for what's next
+<div align="center">
 
-- Saved roll presets (e.g. "Longsword 1d8+3")
-- Typed dice formulas like `2d6+1d4+3`
-- Death saving throws for characters at 0 HP
-- Fuller character sheets with ability scores and saving throws
+*May your rolls be high and your fumbles be funny.* 🎲
+
+</div>
