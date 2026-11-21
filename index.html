@@ -328,6 +328,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
   const ROLL_MS = 2000;                           // how long the die tumbles, in milliseconds
   $("rollBtn").onclick = () => {
     const r = doRoll();                           // the result is decided right away...
+    r.who = rollerName(); r.action = $("action").value.trim();  // remember who rolled, at the moment of rolling
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const wait = reduce ? 0 : ROLL_MS;            // no tumble for people who turn animations off
     $("result").className = "result rolling";
@@ -345,8 +346,8 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     const tag = $("tag");
     if (r.kind) { tag.hidden = false; tag.textContent = r.kind === "crit" ? "NATURAL 20" : "NATURAL 1"; } else tag.hidden = true;
 
-    const who = rollerName();
-    const action = $("action").value.trim();
+    const who = r.who;
+    const action = r.action;
     const name = who ? who.name : "Someone";
     state.log.unshift({ id: uid(), t: Date.now(), who: name, action, label: r.label, total: r.total, kind: r.kind });
     state.log = state.log.slice(0, 40);
@@ -365,6 +366,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     return o.length ? o[state.combat.turn % o.length].id : null;
   }
 
+  let lastTurn = null;                           // whose turn it was the last time the party was drawn
   function renderParty() {
     const cur = currentId();
     const list = orderedParty();
@@ -401,8 +403,11 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     $("round").textContent = inCombat ? `Round ${state.combat.round}` : "";
 
     const sel = $("roller"), keep = sel.value;
+    const turnChanged = cur !== lastTurn;          // a new character's turn has started
+    lastTurn = cur;
     sel.innerHTML = `<option value="">Nobody in particular</option>` + state.party.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
-    sel.value = state.party.some(p => p.id === keep) ? keep : (cur || "");
+    if (turnChanged && cur) sel.value = cur;       // new turn: switch to whoever's up
+    else sel.value = state.party.some(p => p.id === keep) ? keep : (cur || "");  // otherwise keep the current choice
   }
 
   $("cards").addEventListener("click", e => {
