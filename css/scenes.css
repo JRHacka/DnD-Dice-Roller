@@ -1,0 +1,33 @@
+/* Tavern Table: scenes. The illustrated scene behind the whole page, and the scene menu.
+   The current scene's id is on <html data-scene="...">, set by js/scenes.js. */
+
+/* The scene fills the window and stays put while the page scrolls over it.
+   Its art is anchored to the top: the action is near the top, and the ground carries on down the page. */
+.scene-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+.scene-bg svg { width: 100%; height: 100%; display: block; }
+.scene-bg::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(rgba(8, 6, 4, .7), rgba(8, 6, 4, .15) 130px, transparent 200px); }   /* so the title reads */
+header, main { position: relative; z-index: 1; }
+
+/* Start the panels just below the characters' feet, so the action is in view when the page opens.
+   The art's ground line sits 340 units down a 940-unit-tall picture that covers the window,
+   so on screen it's at whichever is bigger: 340/1600 of the width or 340/940 of the height. */
+main { margin-top: max(0px, calc(max(21.25vw, 36.2vh) - 84px)); }
+.headright { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.scene-btn { background: rgba(23, 17, 12, .8); border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; font-size: .85rem; color: var(--parch); }
+.scene-btn:hover { border-color: var(--brass); }
+@media (max-width: 640px) { .headright p { display: none; } }   /* phones: keep the art clear */
+
+/* Flames in the scenes flicker */
+.scene-bg .sf { transform-box: fill-box; transform-origin: 50% 100%; animation: lick 1s ease-in-out infinite alternate; }
+.scene-bg .sf:nth-of-type(2n) { animation-duration: .8s; animation-direction: alternate-reverse; }
+@keyframes lick { 0% { transform: scale(1, 1) skewX(0deg); } 30% { transform: scale(.94, 1.07) skewX(4deg); } 60% { transform: scale(1.05, .95) skewX(-3deg); } 100% { transform: scale(.97, 1.1) skewX(2deg); } }
+
+/* The scene menu (shares its frame with the skin menu) */
+.scenegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 14px 0 6px; }
+.scene-card { background: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 0; overflow: hidden; text-align: left; display: flex; flex-direction: column; }
+.scene-card img { width: 100%; aspect-ratio: 16 / 6; object-fit: cover; display: block; }
+.scene-card span { padding: 8px 10px 10px; font-size: .85rem; color: var(--dim); line-height: 1.3; }
+.scene-card b { display: block; color: var(--parch); font-size: .95rem; }
+.scene-card:hover { border-color: var(--dim); }
+.scene-card[aria-pressed="true"] { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); }

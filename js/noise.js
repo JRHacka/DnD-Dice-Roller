@@ -1,5 +1,5 @@
 // Tavern Table · noise.js
-// Seeded random numbers and smooth, seamlessly tiling "cloudy" noise. Used by skins.js and backdrop.js.
+// Seeded random numbers and smooth, seamlessly tiling "cloudy" noise. Used by skins.js and scenes.js.
 
 function seeded(seed) { return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
 // Smooth random "cloudy" values from 0 to 1 that repeat every 1 unit in u and v

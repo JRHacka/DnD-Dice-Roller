@@ -42,6 +42,20 @@ Click **Roll** and watch them go. The dice are tossed onto the table, bounce, tu
 
 Roll up to **20 dice at once**, and mix any types you like: 2d6 + 1d8 for a sneak attack, 8d6 for a Fireball. They shrink to fit and bump into each other on the way.
 
+### 🗺️ Scenes
+Click **Scene** at the top to set the mood. The scene fills the whole page behind the dice tray and party, with the party in the middle of the action at the top and the ground running down behind the (slightly see-through) wooden panels:
+
+| Scene | What's happening |
+|---|---|
+| 🍺 Tavern | The party shares a round by the fire |
+| 💀 Dungeon | Skeletons and draugr block the tunnel |
+| 🐉 Dragon's Cave | A dragon crawls out of the mountain |
+| 🏘️ Town Square | Market day, with shops and townsfolk |
+| 🔥 Wizard's Tower | A dark wizard rains fireballs on the party |
+| 👑 Castle | The king knights the heroes |
+
+Your choice is saved.
+
 ### 🎨 Dice skins
 Click **Dice skin** in the corner of the dice table to pick from 40 skins: classics, gemstones, metals, camo (woodland, desert, arctic, digital and more), marble, wood and cosmic. Or use **Make your own** to pick colors, a pattern and a finish. Your choice is saved.
 
@@ -102,12 +116,14 @@ So the dice look completely natural, and they always agree with the result. No l
 ```
 index.html             The page itself: markup, plus the list of styles and scripts to load
 css/style.css          Layout and components (tray, party cards, log, skin menu)
-css/tavern.css         The theme: colors, stone wall, wood panels, torches
-js/noise.js            Seeded random numbers and tiling noise (for skins and the wall)
+css/tavern.css         The theme: colors and the wooden panels
+css/scenes.css         The full-page scene and the scene menu
+js/noise.js            Seeded random numbers and tiling noise (for skins and scenes)
 js/app.js              Saved state, party & initiative, roll log
 js/tray.js             Dice pool, modifier, advantage, the Roll button
 js/skins.js            The 40 dice skins, pattern painter and skin menu
-js/backdrop.js         Paints the stone wall behind the page
+js/figures.js          The party, monsters, townsfolk and props, drawn as low-poly SVG
+js/scenes.js           The six scenes and the scene menu
 js/dice3d.js           The 3D dice: shapes, numbers, physics, rolling, glow
 docs/screenshot.png    The picture at the top of this page
 README.md              You are here

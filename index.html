@@ -9,29 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/tavern.css">
+<link rel="stylesheet" href="css/scenes.css">
 </head>
 <body>
-<!-- Shapes shared by both torches -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <linearGradient id="fo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff7a1a"/><stop offset=".6" stop-color="#e2401a"/><stop offset="1" stop-color="#a51e0e" stop-opacity=".2"/></linearGradient>
-    <linearGradient id="fm" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd25a"/><stop offset=".7" stop-color="#ff9a2a"/><stop offset="1" stop-color="#ff7a1a" stop-opacity=".4"/></linearGradient>
-    <linearGradient id="fc" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#ffe9a0"/></linearGradient>
-  </defs>
-</svg>
-<div class="torch t-left" aria-hidden="true"><i class="glow"></i><i class="sconce"></i><i class="handle"></i><svg class="flame" viewBox="0 0 40 66">
-    <path class="f-outer" fill="url(#fo)" d="M21 0 C22 9 26 13 29 20 C30 16 30 12 29 7 C36 16 39 28 37 40 C35 54 29 64 20 64 C11 64 4 55 3 43 C2 33 7 25 10 18 C10 23 11 26 13 29 C13 18 17 9 21 0 Z"/>
-    <path class="f-mid" fill="url(#fm)" d="M19 13 C21 21 27 27 28 38 C29 50 25 59 20 59 C15 59 11 52 11 42 C11 35 14 31 16 26 C17 30 18 32 19 33 C18 26 18 20 19 13 Z"/>
-    <path class="f-core" fill="url(#fc)" d="M20 33 C22 40 25 44 25 50 C25 55 23 59 20 59 C17 59 15 55 15 51 C15 46 18 41 20 33 Z"/>
-  </svg><i class="ember"></i><i class="ember e2"></i><i class="ember e3"></i></div>
-<div class="torch t-right" aria-hidden="true"><i class="glow"></i><i class="sconce"></i><i class="handle"></i><svg class="flame" viewBox="0 0 40 66">
-    <path class="f-outer" fill="url(#fo)" d="M21 0 C22 9 26 13 29 20 C30 16 30 12 29 7 C36 16 39 28 37 40 C35 54 29 64 20 64 C11 64 4 55 3 43 C2 33 7 25 10 18 C10 23 11 26 13 29 C13 18 17 9 21 0 Z"/>
-    <path class="f-mid" fill="url(#fm)" d="M19 13 C21 21 27 27 28 38 C29 50 25 59 20 59 C15 59 11 52 11 42 C11 35 14 31 16 26 C17 30 18 32 19 33 C18 26 18 20 19 13 Z"/>
-    <path class="f-core" fill="url(#fc)" d="M20 33 C22 40 25 44 25 50 C25 55 23 59 20 59 C17 59 15 55 15 51 C15 46 18 41 20 33 Z"/>
-  </svg><i class="ember"></i><i class="ember e2"></i><i class="ember e3"></i></div>
+<!-- THE SCENE behind the whole page: drawn by js/scenes.js -->
+<div class="scene-bg" id="sceneArt" aria-hidden="true"></div>
 <header>
   <h1>Tavern Table</h1>
-  <p>Roll dice, track the party, and run the fight.</p>
+  <div class="headright">
+    <p>Roll dice, track the party, and run the fight.</p>
+    <button class="scene-btn" id="sceneBtn" type="button" aria-haspopup="dialog">🗺️ Scene</button>
+  </div>
 </header>
 
 <main>
@@ -117,6 +105,15 @@
   </section>
 </main>
 
+<!-- SCENE MENU -->
+<dialog class="skins" id="sceneMenu" aria-labelledby="scene-h">
+  <div class="skins-head">
+    <h2 id="scene-h">Choose a scene</h2>
+    <button class="ghost" id="sceneDone" type="button">Done</button>
+  </div>
+  <div class="skins-body"><div class="scenegrid" id="sceneList"></div></div>
+</dialog>
+
 <!-- DICE SKIN MENU -->
 <dialog class="skins" id="skinMenu" aria-labelledby="skin-h">
   <div class="skins-head">
@@ -166,7 +163,8 @@
 <script src="js/app.js"></script>
 <script src="js/tray.js"></script>
 <script src="js/skins.js"></script>
-<script src="js/backdrop.js"></script>
+<script src="js/figures.js"></script>
+<script src="js/scenes.js"></script>
 <script src="js/dice3d.js"></script>
 <script>
   // Start up: draw the tray, the party and the log once
