@@ -455,7 +455,7 @@ header, main { position: relative; z-index: 1; }
 
   function doRoll() {
     const { mod, mode } = tray;
-    let values, kept, natural = null, parts;
+    let values, kept, natural = null, parts, keep;   // keep: which dice count (only set for advantage/disadvantage)
     if (advAllowed() && mode !== "norm") {
       const a = d(20), b = d(20);
       kept = mode === "adv" ? Math.max(a, b) : Math.min(a, b);
@@ -463,6 +463,7 @@ header, main { position: relative; z-index: 1; }
       const keepFirst = (mode === "adv" ? a >= b : a <= b);
       parts = `[<span class="${keepFirst ? "kept" : "dropped"}">${a}</span>, <span class="${keepFirst ? "dropped" : "kept"}">${b}</span>]`;
       values = [a, b];
+      keep = [keepFirst, !keepFirst];
     } else {
       const groups = poolTypes().map(s => Array.from({ length: tray.pool[s] }, () => d(s)));  // one list of rolls per die type
       values = groups.flat();                       // same order as the dice on the table
@@ -473,7 +474,7 @@ header, main { position: relative; z-index: 1; }
     const total = kept + mod;
     const kind = natural === 20 ? "crit" : natural === 1 ? "fumble" : "";
     const label = `${poolText()}${mod ? " " + fmtMod(mod) : ""}${mode === "adv" ? " adv" : mode === "dis" ? " dis" : ""}`;
-    return { total, natural, kind, label, parts, mod, mode, dice: values };
+    return { total, natural, kind, label, parts, mod, mode, dice: values, keep };
   }
 
   function rollerName() {
@@ -491,7 +492,7 @@ header, main { position: relative; z-index: 1; }
     $("result").className = "result rolling";
     $("tag").hidden = true;
     rolling = true; syncRollBtn();
-    document.dispatchEvent(new CustomEvent("die:roll", { detail: { duration: wait, values: r.dice } }));
+    document.dispatchEvent(new CustomEvent("die:roll", { detail: { duration: wait, values: r.dice, keep: r.keep } }));
     setTimeout(() => { showRoll(r); rolling = false; syncRollBtn(); }, wait); // ...and shown when the die lands
   };
 
@@ -1037,7 +1038,11 @@ function applySkin({ skin, canvas }) {
   ink = skin.ink;                               // repaint every number in the new color
   const old = [...labelCache.values()];
   labelCache.clear();
-  scene.traverse(o => { if (o.userData.label) o.material = labelMaterial(o.userData.label.n, o.userData.label.underline); });
+  scene.traverse(o => {
+    if (!o.userData.label) return;
+    const m = labelMaterial(o.userData.label.n, o.userData.label.underline);
+    if (o.userData.lit) o.userData.lit.mat = m; else o.material = m;   // a glowing number stays glowing; it gets the new color when it's put back
+  });
   old.forEach(m => { m.map.dispose(); m.dispose(); });
   renderer.render(scene, camera);
 }
@@ -1080,6 +1085,72 @@ function addSticker(group, value, at, normal, up, size, underline) {
   s.scale.setScalar(size);
   group.add(s);
   return s;
+}
+
+// --- The rolled number, lit up: bright yellow with a glowing halo. Drawn on a bigger square
+//     than a normal number so the halo has room, and the sticker is scaled up to match.
+const GLOW_ROOM = 1.5;                          // the glow square is 1.5× a normal number's square
+const POP = 1.3;                                // how much bigger a lit number ends up
+const glowCache = new Map();
+function glowMaterial(n, underline) {
+  const key = `${n}${underline ? "_" : ""}`;
+  if (glowCache.has(key)) return glowCache.get(key);
+  const c = document.createElement("canvas");
+  c.width = c.height = 192;                     // 128 × GLOW_ROOM
+  const ctx = c.getContext("2d");
+  const digits = String(n).length;
+  ctx.font = `bold ${digits > 2 ? 54 : digits > 1 ? 70 : 84}px Georgia, serif`;   // same size as the normal numbers
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const mark = () => { if (underline && (n === 6 || n === 9)) ctx.fillRect(72, 138, 48, 7); };
+  ctx.shadowColor = "rgba(255, 200, 40, 1)";    // the halo: a few blurred passes build it up
+  ctx.fillStyle = "#ffd84a";
+  for (const blur of [28, 16, 8]) { ctx.shadowBlur = blur; ctx.fillText(n, 96, 98); mark(); }
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 8; ctx.lineJoin = "round"; ctx.strokeStyle = "rgba(80, 38, 0, .9)";
+  ctx.strokeText(n, 96, 98);                    // a thin dark edge so it still reads on light skins
+  ctx.fillStyle = "#fff4b8"; ctx.fillText(n, 96, 98); mark();
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2 });
+  glowCache.set(key, mat);
+  return mat;
+}
+
+// --- Light up the number each die landed on, with a quick "pop" (grows past full size, then settles)
+let litList = [];                               // the numbers lit right now
+let popFrame = null;
+function clearHighlight() {
+  cancelAnimationFrame(popFrame);
+  for (const m of litList) {
+    m.material = m.userData.lit.mat;            // back to the normal number
+    m.scale.setScalar(m.userData.lit.size);
+    delete m.userData.lit;
+  }
+  litList = [];
+}
+function highlight(values, keep, instant) {
+  clearHighlight();
+  dice.forEach((d, i) => {
+    if (values?.[i] === undefined || keep?.[i] === false) return;   // the dropped die of advantage/disadvantage stays plain
+    for (const m of d.group.children) {         // every sticker showing the rolled number (a d4 shows it on three faces)
+      const label = m.userData.label;
+      if (!label || label.n !== values[i] || (d.kit.kind === "ball" && m !== d.sticker)) continue;
+      m.userData.lit = { mat: m.material, size: m.scale.x };
+      m.material = glowMaterial(label.n, label.underline);
+      litList.push(m);
+    }
+  });
+  const start = performance.now(), POP_MS = 380;
+  const grow = now => {
+    const t = instant ? 1 : Math.min(1, (now - start) / POP_MS);
+    const k = 1 + (POP - 1) * (1 - Math.pow(1 - t, 3)) + Math.sin(t * Math.PI) * 0.18;  // ease out, with a bump in the middle
+    for (const m of litList) m.scale.setScalar(m.userData.lit.size * GLOW_ROOM * k);
+    renderer.render(scene, camera);
+    if (t < 1) popFrame = requestAnimationFrame(grow);
+  };
+  grow(start);
 }
 
 // --- Work out each flat face: which way it points, its corners, its middle, and which way is "up" for its number
@@ -1182,6 +1253,7 @@ function setDice(list) {
   if (key === shown) return;                    // e.g. changing the modifier doesn't need new dice
   shown = key;
   cancelAnimationFrame(rollFrame);              // stop any roll in progress
+  clearHighlight();
   dice.forEach(d => scene.remove(d.group));     // clear the old dice (their shapes are kept for next time)
 
   // Shrink the dice when there are lots of them, so together they cover about 20% of the table
@@ -1315,8 +1387,9 @@ function placeBallNumber(d, end, value) {
 // --- Rolling: work out the whole roll first, fix the numbers, then play it back
 const STEP = 1 / 240;                           // the physics runs in steps of 1/240th of a second
 let rollFrame = null;
-function roll(duration, values) {
+function roll(duration, values, keep) {
   cancelAnimationFrame(rollFrame);              // stop any roll already in progress
+  clearHighlight();                             // the last roll's numbers go back to normal
   const w = walls();
   const secs = duration / 1000;
   dice.forEach(d => {
@@ -1364,11 +1437,12 @@ function roll(duration, values) {
     dice.forEach(d => { d.group.position.copy(d.path[i].p); d.group.quaternion.copy(d.path[i].q); });
     renderer.render(scene, camera);
     if (t < 1) rollFrame = requestAnimationFrame(frame);  // ask the browser for the next frame
+    else highlight(values, keep, !duration);    // landed: light up the rolled numbers
   };
   rollFrame = requestAnimationFrame(frame);
 }
 
-document.addEventListener("die:roll", e => roll(e.detail.duration, e.detail.values));
+document.addEventListener("die:roll", e => roll(e.detail.duration, e.detail.values, e.detail.keep));
 document.addEventListener("tray:change", e => setDice(e.detail.dice));
 document.addEventListener("skin:change", e => applySkin(e.detail));
 if (window.tavernSkin) applySkin(window.tavernSkin);   // the skin and dice chosen before this loaded

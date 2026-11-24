@@ -9,6 +9,9 @@ The user works on this project from both a PC and a laptop. Claude's local memor
 - When a chunk of work is done, or before the user wraps up, update "Where we left off": what changed, what's unfinished, and ideas for what's next. Keep it short and replace stale entries instead of piling them up.
 - Remind the user to commit and push so the other machine gets the update.
 
+## Commit after every change
+The user wants a fresh commit for each change. **Every time a change is finished and checked, end your message with a short reminder to commit it**, with a suggested commit message (e.g. "Ready to commit: `Add glowing highlight on rolled numbers`"). Do this even for small changes. Don't commit or push yourself unless the user asks.
+
 ## Where we left off
 _Last updated: 2026-11-23_
 
@@ -16,7 +19,9 @@ _Last updated: 2026-11-23_
 - Mixed dice pool: tap a die to add it, tap a chip to remove one, Clear. Max 20. Advantage/disadvantage only for exactly 1d20. In the 3D code, each die type has a cached "kit" (`kitFor`), and each die on the table stores its own kit, reach and radius.
 - Dice skins: 40 presets in `SKINS` plus "Make your own" (colors, pattern, finish), in a `<dialog>` opened by the "Dice skin" button on the dice table. Patterns are painted to a tileable canvas (`paintSkin`) and mapped per face (`faceUVs`). The choice is saved in `state.skin` / `state.customSkin`. A RoomEnvironment was added so gloss and metal finishes reflect.
 - "Stone Hall" tavern theme (the user picked it from 3 mockups: stone hall, timber tavern, cellar hearth). Warm brown palette in the `:root` variables, dark wood plank panels (inline SVG grain), and a stone wall painted to a canvas at load by `paintStoneWall()` into the CSS `--wall` variable. Two SVG wall torches with layered flickering flames, embers and glow, shown in the side margins only at ≥1560px wide. Faint corner firelight at all widths.
-- Testing note: headless Firefox (a snap, so it can't read /tmp; use ~/snap/firefox/common/) has no WebGL. Logic was verified with a fake-renderer shim (330/330 dice showed the rolled value). **The 3D look of the skins still needs a check in a real browser.**
+- (The user committed everything above.)
+- Rolled-number highlight: when dice land, `highlight()` swaps each shown number's sticker to a glowing yellow `glowMaterial` and pops it to 1.3× with an overshoot. A d4 lights its 3 stickers at the top corner. With advantage/disadvantage only the kept die lights up (`keep` is passed from `doRoll` through the `die:roll` event). `clearHighlight()` runs on each new roll and dice change. Lit numbers survive a skin change (`userData.lit`). Verified with the shim: 140/140. **The 3D look still needs a check in a real browser.**
+- Testing note: headless Firefox (a snap, so it can't read /tmp; use ~/snap/firefox/common/) has no WebGL. Logic is verified with a fake-renderer shim that swaps `three` for a module exporting a stub `WebGLRenderer` and `PMREMGenerator`, plus the pref `security.fileuri.strict_origin_policy=false`. CSS and 2D visuals can be screenshotted normally.
 
 **Done 2026-11-20 (PC):**
 - 3D dice physics: tossed, bounce, collide, settle. The result is decided first, the throw is simulated, and the faces are relabeled so the top face matches the result.

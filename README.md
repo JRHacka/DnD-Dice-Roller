@@ -30,7 +30,7 @@ No install, no build step, no account. The page does need an internet connection
 ## ✨ What's on the table
 
 ### 🎲 Real 3D dice
-Click **Roll** and watch them go. The dice are tossed onto the table, bounce, tumble over each other, crash off the walls and settle flat, and **the number facing up is the number you rolled.**
+Click **Roll** and watch them go. The dice are tossed onto the table, bounce, tumble over each other, crash off the walls and settle flat, and **the number facing up is the number you rolled.** When they land, each rolled number lights up in a yellow glow and pops up so you can read it at a glance. With advantage or disadvantage, only the d20 you keep lights up.
 
 | Die | How it reads |
 |---|---|
