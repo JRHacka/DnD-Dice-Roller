@@ -55,6 +55,19 @@
 @keyframes kit-twinkle { from { opacity: calc(var(--o) * .25); } to { opacity: var(--o); } }
 @keyframes kit-fireflies { 0%, 100% { transform: translate(0, 0); opacity: .15; } 25% { opacity: 1; } 50% { transform: translate(calc(var(--dx) * var(--u)), calc(var(--dy) * var(--u))); opacity: .3; } 75% { transform: translate(calc(var(--dx) * -.5 * var(--u)), calc(var(--dy) * .6 * var(--u))); opacity: 1; } }
 
+/* Painted figures: an image whose feet sit on the floor. The box breathes (a tiny stretch from the feet up);
+   attackers also lunge toward the enemy now and then. --face: 1 faces right, -1 faces left. */
+.kit-fig { position: absolute; transform-origin: 50% 100%; will-change: transform; }
+.kit-fig > img { width: 100%; height: 100%; display: block; transform-origin: 50% 100%; will-change: transform;
+  animation: kit-breathe 3.6s ease-in-out infinite alternate; }
+.kit-flip > img { scale: -1 1; }                                  /* mirrored, separate from the breathing transform */
+.kit-fig-lunge { animation: kit-lunge 4.5s ease-in-out infinite; }
+@keyframes kit-breathe { from { transform: scale(1, 1); } to { transform: scale(.995, 1.015); } }
+@keyframes kit-lunge { 0%, 62%, 100% { transform: translateX(0) rotate(0); }
+  72% { transform: translateX(calc(var(--face) * -3 * var(--u))) rotate(calc(var(--face) * -1deg)); }   /* wind up */
+  80% { transform: translateX(calc(var(--face) * 10 * var(--u))) rotate(calc(var(--face) * 1.5deg)); }  /* strike */
+  90% { transform: translateX(calc(var(--face) * 4 * var(--u))) rotate(0); } }
+
 /* Overlays over the whole window: film grain, a color grade, and a vignette */
 .kit-grain, .kit-grade, .kit-vignette { position: absolute; inset: 0; pointer-events: none; }
 .kit-grain { background-size: 256px 256px; mix-blend-mode: overlay; }
@@ -67,4 +80,5 @@
   .kit-flicker-sweep { display: none; }
   .kit-fly { animation: none; opacity: 1; transform: translate(calc(var(--fx) * .5), calc(var(--fy) * .5)); }   /* frozen halfway */
   .kit-p:not(.kit-p-twinkle) { display: none; }
+  .kit-fig, .kit-fig > img { animation: none; }
 }

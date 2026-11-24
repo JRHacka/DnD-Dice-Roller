@@ -196,6 +196,71 @@ function dungeonArt() {
   return k.build();
 }
 
+/* ---------- Painted figures and scenes (test) ---------- */
+// Each file's size and the box around the character inside it, in pixels (measured from the images)
+const PAINTED = {
+  wizard:          { src: "assets/characters/wizard-standard.webp",         w: 1024, h: 1536, box: [47, 0, 993, 1530], orb: [901, 166] },
+  elf:             { src: "assets/characters/elf-standard.webp",            w: 1024, h: 1536, box: [20, 8, 996, 1513] },
+  dwarf:           { src: "assets/characters/dwarf-standard.webp",          w: 1024, h: 1536, box: [12, 140, 1007, 1511] },
+  barbarian:       { src: "assets/characters/barbarian-standard.webp",      w: 1024, h: 1536, box: [34, 6, 988, 1529] },
+  skeletonSword:   { src: "assets/characters/skeleton-sword-standard.webp", w: 1024, h: 1536, box: [70, 10, 981, 1519] },
+  skeletonSpear:   { src: "assets/characters/skeleton-spear-standard.webp", w: 1024, h: 1536, box: [7, 337, 1023, 1377] },
+  skeletonBrute:   { src: "assets/characters/skeleton-brute-standard.webp", w: 1024, h: 1536, box: [10, 0, 1004, 1523] },
+  skeletonBow:     { src: "assets/characters/skeleton-bow-standard.webp",   w: 1024, h: 1536, box: [26, 15, 987, 1523] },
+  skeletonAxe:     { src: "assets/characters/skeleton-axe-standard.webp",   w: 1024, h: 1536, box: [20, 85, 1000, 1495] }
+};
+// A painted character standing at (x, floor), with the kit's soft shadow under its feet. Returns the shadow's SVG.
+const painted = (k, who, x, floor, size, o = {}) => (k.figure({ ...PAINTED[who], x, y: floor, size, ...o }), k.shadow(x, floor + 1, size * 0.42));
+// Where a spot in a character's image (pixels) lands in the scene, for a character placed by painted() at (x, floor) and size
+const paintedPoint = (who, x, floor, size, [px, py]) => {
+  const { h, box: [l, , r, b] } = PAINTED[who], s = size / h;
+  return { x: x + (px - (l + r) / 2) * s, y: floor - (b - py) * s };
+};
+
+function paintedDungeonArt() {
+  const floor = 296;
+  const k = sceneKit({ air: "#0b1416", vignette: 0.55, grain: 0.06, seed: 4,
+    figureFilter: "brightness(.8) contrast(1.05) saturate(.88) sepia(.12)" });   // dim and warm them to the torchlight
+  // The painting covers the frame (1536 × 1024 drawn 1600 wide), moved up so its floor meets the ground line
+  const paint = (file) => `<image href="assets/scenes/${file}" x="0" y="-100" width="1600" height="1067" preserveAspectRatio="none"/>`;
+
+  const wizard = { x: 480, size: 143 };         // used for the wizard and for the glow on his orb
+
+  // Mid: the painting, the shadows, and everyone on the floor (all at one depth, so feet stay put)
+  k.layer("mid", () =>
+    paint("dungeon.webp") +
+    // the party, left of center, facing right
+    painted(k, "elf", 380, floor, 141) +
+    painted(k, "wizard", wizard.x, floor, wizard.size) +
+    painted(k, "dwarf", 580, floor, 123, { anim: "lunge" }) +
+    painted(k, "barbarian", 690, floor, 158, { anim: "lunge" }) +              // bigger: he's a barbarian
+    // the undead, right of center, facing left: two staggered rows, with the giant anchoring the right flank
+    // back row: in the gaps of the front row, a bit smaller and dimmer
+    painted(k, "skeletonSword", 950, floor - 14, 134, { face: -1, filter: "brightness(.74) contrast(1.05) saturate(.85) sepia(.12)" }) +
+    painted(k, "skeletonBow", 1050, floor - 14, 136, { face: -1, filter: "brightness(.74) contrast(1.05) saturate(.85) sepia(.12)" }) +
+    // the giant: in front of the back row, out on the right
+    painted(k, "skeletonBrute", 1180, floor - 4, 192, { face: -1, anim: "lunge" }) +
+    // front row: on the ground line, leading the charge
+    painted(k, "skeletonAxe", 1000, floor + 2, 141, { face: -1, anim: "lunge" }) +
+    painted(k, "skeletonSpear", 900, floor + 2, 141, { face: -1, anim: "lunge" }));
+
+  // Torch glows on the painted torches, so they flicker (the painting already has the torches themselves)
+  for (const [x, y] of [[193, 67], [758, 75], [1415, 77]])
+    k.light({ kind: "torch", x, y, layer: "mid", ground: 270, radius: 170, strength: 0.25 });
+  // The orb on the wizard's staff
+  const orb = paintedPoint("wizard", wizard.x, floor, wizard.size, PAINTED.wizard.orb);
+  k.light({ kind: "magic", x: orb.x, y: orb.y, layer: "mid", color: "#9fe8ff", radius: 75, strength: 0.45 });
+
+  // Foreground: the rubble overlay, framing the edges
+  k.layer("foreground", () => paint("dungeon-front.webp"));
+
+  // Dust drifting in the torchlight
+  k.particles({ kind: "dust", layer: "near", x0: 110, x1: 300, y0: 40, y1: 260, count: 14, color: "#ffd9a0" })
+   .particles({ kind: "dust", layer: "near", x0: 660, x1: 860, y0: 40, y1: 260, count: 12, color: "#ffd9a0" })
+   .particles({ kind: "dust", layer: "near", x0: 1320, x1: 1510, y0: 40, y1: 260, count: 14, color: "#ffd9a0" });
+  return k.build();
+}
+
 /* ---------- The dragon's cave ---------- */
 function dragon(x, y, s) {                                       // faces left; (x, y) is where its neck leaves the cave
   const red = "#9a2420", dark = "#6a1814", belly = "#d89a5a";
@@ -452,6 +517,7 @@ function castleArt() {
 const SCENES = [
   { id: "tavern", name: "Tavern", blurb: "Mugs up by the fire", art: tavernArt },
   { id: "dungeon", name: "Dungeon", blurb: "The dead don't stay down", art: dungeonArt },
+  { id: "dungeon-painted", name: "Dungeon (Painted)", blurb: "Test: painted art", art: paintedDungeonArt, thumb: "assets/scenes/dungeon.webp" },
   { id: "cave", name: "Dragon's Cave", blurb: "Something stirs in the mountain", art: caveArt },
   { id: "town", name: "Town Square", blurb: "Market day", art: townArt },
   { id: "tower", name: "Wizard's Tower", blurb: "Incoming!", art: towerArt },
@@ -478,7 +544,7 @@ function applyScene(id) {
 function buildSceneMenu() {
   $("sceneList").innerHTML = SCENES.map(s =>
     `<button type="button" class="scene-card" data-id="${s.id}" aria-pressed="${s.id === (state.scene || DEFAULT_SCENE)}">` +
-    `<img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(artPreview(sceneArt(s)).replace(/viewBox="[^"]*"/, 'viewBox="0 10 1600 300"'))}">` +
+    `<img alt="" src="${s.thumb || `data:image/svg+xml;charset=utf-8,${encodeURIComponent(artPreview(sceneArt(s)).replace(/viewBox="[^"]*"/, 'viewBox="0 10 1600 300"'))}`}">` +
     `<span><b>${esc(s.name)}</b> ${esc(s.blurb)}</span></button>`).join("");
 }
 $("sceneList").addEventListener("click", e => { const b = e.target.closest(".scene-card"); if (b) applyScene(b.dataset.id); });

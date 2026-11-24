@@ -1,0 +1,9 @@
+# CLAUDE.md is a local, one-line pointer to private Claude Code notes. Keep it out of this public repo.
+# New device setup:
+#   1. git clone https://github.com/JRHacka/claude-notes.git ~/claude-notes
+#   2. In this project folder, create CLAUDE.md containing the single line:
+#        @~/claude-notes/DnD-Dice-Roller.md
+CLAUDE.md
+
+# Full-size original art (masters for editing). The web-size WebP versions in assets/ are what the page uses.
+art-source/

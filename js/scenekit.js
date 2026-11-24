@@ -110,10 +110,10 @@ const PARTICLE_KINDS = {
 // air: the haze color distant things fade toward. grade: { color, mode, opacity } tints the whole scene.
 // vignette: 0–1, how dark the edges get. grain: 0–1, film grain strength. seed: keeps the random bits the same each time.
 // cast: for daylight, which way shadows fall (-1 left … 1 right, 0 straight down under the feet).
-function sceneKit({ air = "#8a94a8", grade = null, vignette = 0.45, grain = 0.1, seed = 1, cast = 0 } = {}) {
+function sceneKit({ air = "#8a94a8", grade = null, vignette = 0.45, grain = 0.1, seed = 1, cast = 0, figureFilter = "" } = {}) {
   const rand = seeded(seed);
   const between = ([a, b]) => a + rand() * (b - a);
-  const content = {}, defs = [], lights = [], particles = [], drifts = {};
+  const content = {}, defs = [], lights = [], particles = [], drifts = {}, figures = [];
 
   const kit = {
     // The color c as it looks in a given layer (paler and hazier the farther away it is)
@@ -177,6 +177,17 @@ function sceneKit({ air = "#8a94a8", grade = null, vignette = 0.45, grain = 0.1,
       return kit;
     },
 
+    // A painted character (an image file) standing with its feet at (x, y).
+    // w, h: the file's size in pixels. box: [left, top, right, bottom], the character inside the file, in pixels.
+    // size: how tall the whole file is drawn, in art units. face: 1 if the character faces right, -1 if left.
+    // flip: mirror the image. anim: "breathe" (idle) or "lunge" (attacks now and then). filter: a CSS filter (the scene's tint by default).
+    figure({ src, w, h, box, x, y, size, face = 1, flip = false, anim = "breathe", layer = "mid", filter }) {
+      const s = size / h, [l, t, r, b] = box;
+      figures.push({ src, depth: kitLayer(layer).depth, face, flip, anim, filter: filter ?? figureFilter,
+        left: x - ((l + r) / 2) * s, top: y - b * s, w: w * s, h: h * s, delay: rand() * 4 });
+      return kit;
+    },
+
     // Put it all together. Returns { html } for the page and { preview } (one flat SVG) for the scene menu.
     build() {
       const allDefs = defs.join("");
@@ -190,10 +201,12 @@ function sceneKit({ air = "#8a94a8", grade = null, vignette = 0.45, grain = 0.1,
         return `<div class="kit-layer" style="--d:${depth}">` +
           (d ? `<div class="kit-drift" style="--dist:${d.dist};animation-duration:${d.dur}s">${inner}</div>` : inner) + `</div>`;
       };
+      const figureLayer = d => figures.some(f => f.depth === d) ? `<div class="kit-layer kit-figures" style="--d:${d}">${figures.filter(f => f.depth === d).map(figureHtml).join("")}</div>` : "";
       for (const l of KIT_LAYERS) {
         if (l.name === "foreground") layersHtml += lightLayers;          // lights shine on everything behind the foreground
         for (const name of Object.keys(content).filter(n => n === l.name || n.startsWith(l.name + ":")))
           layersHtml += layerDiv(name, l.depth);                           // the layer, then its sub-layers in the order they were drawn
+        layersHtml += figureLayer(l.depth);                                // painted figures stand in front of their layer's art
       }
       if (!content.foreground) layersHtml += lightLayers;
       const overlays =
@@ -238,6 +251,11 @@ function lightSvg(l, i) {                       // the same glow, as SVG, for th
 function particleHtml(p) {
   return `<i class="kit-p kit-p-${p.kind}" style="left:${pctX(p.x)};top:${pctY(p.y)};--r:${(p.r * 2).toFixed(2)};--dx:${p.dx.toFixed(1)};--dy:${p.dy.toFixed(1)};--o:${p.o.toFixed(2)};` +
     `background:${p.color};${p.glow ? `box-shadow:0 0 calc(var(--r) * 3 * var(--u)) ${p.color};` : ""}animation-duration:${p.dur.toFixed(2)}s;animation-delay:-${p.delay.toFixed(2)}s"></i>`;
+}
+
+function figureHtml(f) {
+  return `<div class="kit-fig kit-fig-${f.anim}${f.flip ? " kit-flip" : ""}" style="left:${pctX(f.left)};top:${pctY(f.top)};width:${pctW(f.w)};height:${pctH(f.h)};--face:${f.face};animation-delay:-${f.delay.toFixed(2)}s">` +
+    `<img src="${f.src}" alt="" draggable="false" style="${f.filter ? `filter:${f.filter};` : ""}animation-delay:-${f.delay.toFixed(2)}s"></div>`;
 }
 
 /* ---------- Parallax ---------- */
