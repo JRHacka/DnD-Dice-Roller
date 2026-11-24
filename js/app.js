@@ -28,8 +28,21 @@ const EXAMPLE = [
   { id: uid(), name: "Goblin Boss", cls: "Goblinoid", lvl: 1, hp: 21, maxhp: 21, ac: 17, init: 2, conds: [], monster: true }
 ];
 
-let state = { party: EXAMPLE, combat: null, log: [] };
-try { const saved = JSON.parse(localStorage.getItem(STORE)); if (saved && Array.isArray(saved.party)) state = saved; } catch (e) {}
+// The saved state. VERSION goes up by one whenever the saved shape changes,
+// and migrate() upgrades older saves one step at a time.
+const VERSION = 1;
+function migrate(s) {
+  if (!s.version) s.version = 1;   // saves from before versioning: same shape, just mark them as version 1
+  // Next time the shape changes, add a step here, e.g.:
+  // if (s.version === 1) { ...reshape s...; s.version = 2; }
+  return s;
+}
+
+let state = { version: VERSION, party: EXAMPLE, combat: null, log: [] };
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE));
+  if (saved && Array.isArray(saved.party)) state = migrate(saved);
+} catch (e) {}
 const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
 
 const $ = id => document.getElementById(id);
