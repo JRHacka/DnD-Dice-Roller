@@ -143,7 +143,8 @@ css/tavern.css         The theme: colors and the wooden panels
 css/scenes.css         The full-page scene and the scene menu
 css/scenekit.css       Scene kit: depth layers, lights, particles, overlays
 js/noise.js            Seeded random numbers and tiling noise (for skins and scenes)
-js/app.js              Saved state, party & initiative, roll log
+js/storage.js          Saving and loading (and upgrading old saves)
+js/app.js              The party & initiative, roll log
 js/tray.js             Dice pool, modifier, advantage, the Roll button
 js/skins.js            The 40 dice skins, pattern painter and skin menu
 js/figures.js          The party, monsters, townsfolk and props, drawn as low-poly SVG

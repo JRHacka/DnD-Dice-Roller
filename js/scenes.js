@@ -536,14 +536,14 @@ function applyScene(id) {
   $("sceneArt").innerHTML = artHtml(sceneArt(s));
   kitMount($("sceneArt"));                             // mouse parallax, for kit-built scenes
   document.documentElement.dataset.scene = s.id;
-  state.scene = s.id; save();
+  settings.scene = s.id; save();
   document.querySelectorAll(".scene-card").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === s.id));
 }
 
 // --- The scene menu: a card per scene, with a picture of its banner
 function buildSceneMenu() {
   $("sceneList").innerHTML = SCENES.map(s =>
-    `<button type="button" class="scene-card" data-id="${s.id}" aria-pressed="${s.id === (state.scene || DEFAULT_SCENE)}">` +
+    `<button type="button" class="scene-card" data-id="${s.id}" aria-pressed="${s.id === (settings.scene || DEFAULT_SCENE)}">` +
     `<img alt="" src="${s.thumb || `data:image/svg+xml;charset=utf-8,${encodeURIComponent(artPreview(sceneArt(s)).replace(/viewBox="[^"]*"/, 'viewBox="0 10 1600 300"'))}`}">` +
     `<span><b>${esc(s.name)}</b> ${esc(s.blurb)}</span></button>`).join("");
 }
@@ -552,4 +552,4 @@ $("sceneBtn").onclick = () => { if (!$("sceneList").children.length) buildSceneM
 $("sceneDone").onclick = () => $("sceneMenu").close();
 $("sceneMenu").addEventListener("click", e => { if (e.target === $("sceneMenu")) $("sceneMenu").close(); });
 
-applyScene(state.scene || DEFAULT_SCENE);
+applyScene(settings.scene || DEFAULT_SCENE);

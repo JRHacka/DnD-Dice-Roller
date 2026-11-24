@@ -12,7 +12,6 @@ const ICONS = {
   100: '<circle cx="15" cy="15" r="12" fill="none" stroke="#9a9cae" stroke-width="1.8"/>'
 };
 const CONDITIONS = ["Blinded","Charmed","Concentrating","Frightened","Grappled","Incapacitated","Invisible","Paralyzed","Poisoned","Prone","Restrained","Stunned"];
-const STORE = "tavern-table-v1";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const d = n => 1 + Math.floor(Math.random() * n);
@@ -28,22 +27,11 @@ const EXAMPLE = [
   { id: uid(), name: "Goblin Boss", cls: "Goblinoid", lvl: 1, hp: 21, maxhp: 21, ac: 17, init: 2, conds: [], monster: true }
 ];
 
-// The saved state. VERSION goes up by one whenever the saved shape changes,
-// and migrate() upgrades older saves one step at a time.
-const VERSION = 1;
-function migrate(s) {
-  if (!s.version) s.version = 1;   // saves from before versioning: same shape, just mark them as version 1
-  // Next time the shape changes, add a step here, e.g.:
-  // if (s.version === 1) { ...reshape s...; s.version = 2; }
-  return s;
-}
-
-let state = { version: VERSION, party: EXAMPLE, combat: null, log: [] };
-try {
-  const saved = JSON.parse(localStorage.getItem(STORE));
-  if (saved && Array.isArray(saved.party)) state = migrate(saved);
-} catch (e) {}
-const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
+// The saved state, in two parts: `state` is the game data, `settings` is this device's settings.
+// Loading, saving and upgrading old saves all live in js/storage.js.
+let { game: state, settings } = store.load();
+if (!state) state = { version: store.VERSION, party: EXAMPLE, combat: null, log: [] };   // first visit
+const save = () => store.save(state, settings);
 
 const $ = id => document.getElementById(id);
 

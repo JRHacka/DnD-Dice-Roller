@@ -121,7 +121,7 @@ function paintSkin(skin, size = 256) {
 
 // --- The skin menu
 const DEFAULT_SKIN = "midnight";
-const skinById = id => id === "custom" && state.customSkin ? { ...state.customSkin, id: "custom", name: "Custom" }
+const skinById = id => id === "custom" && settings.customSkin ? { ...settings.customSkin, id: "custom", name: "Custom" }
   : SKINS.find(s => s.id === id) || SKINS[0];
 function applySkin(skin) {
   const detail = { skin, canvas: paintSkin(skin) };
@@ -129,7 +129,7 @@ function applySkin(skin) {
   document.dispatchEvent(new CustomEvent("skin:change", { detail }));
 }
 function chooseSkin(id) {
-  state.skin = id; save();
+  settings.skin = id; save();
   applySkin(skinById(id));
   document.querySelectorAll(".skin").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === id));
   fillCustom(skinById(id));
@@ -169,7 +169,7 @@ function previewTile(skin) {                      // a little d20-ish hexagon in
 function buildSkinMenu() {
   const groups = [...new Set(SKINS.map(s => s.group))];
   $("skinList").innerHTML = groups.map(g => `<h3>${esc(g)}</h3><div class="skingrid">${
-    SKINS.filter(s => s.group === g).map(s => `<button type="button" class="skin" data-id="${s.id}" aria-pressed="${s.id === (state.skin || DEFAULT_SKIN)}"><span>${esc(s.name)}</span></button>`).join("")
+    SKINS.filter(s => s.group === g).map(s => `<button type="button" class="skin" data-id="${s.id}" aria-pressed="${s.id === (settings.skin || DEFAULT_SKIN)}"><span>${esc(s.name)}</span></button>`).join("")
   }</div>`).join("");
   document.querySelectorAll(".skin").forEach(b => b.prepend(previewTile(skinById(b.dataset.id))));
 }
@@ -197,10 +197,10 @@ Object.keys(customFields).forEach(id => $(id).addEventListener("input", () => {
     const body = $("cBody").value, accent = $("cAccent").value;
     const darker = "#" + hex(accent).map(x => Math.round(x * 0.6).toString(16).padStart(2, "0")).join("");
     const lighter = "#" + mix(hex(body), [255, 255, 255], 0.35).map(x => Math.round(x).toString(16).padStart(2, "0")).join("");
-    state.customSkin = S("custom", "Custom", "Custom", $("cPattern").value, [body, accent, darker, lighter], $("cEdge").value, $("cInk").value, $("cFinish").value);
+    settings.customSkin = S("custom", "Custom", "Custom", $("cPattern").value, [body, accent, darker, lighter], $("cEdge").value, $("cInk").value, $("cFinish").value);
     chooseSkin("custom");
   });
 }));
 
-applySkin(skinById(state.skin || DEFAULT_SKIN));   // put the saved skin on the dice
-fillCustom(skinById(state.skin || DEFAULT_SKIN));
+applySkin(skinById(settings.skin || DEFAULT_SKIN));   // put the saved skin on the dice
+fillCustom(skinById(settings.skin || DEFAULT_SKIN));
