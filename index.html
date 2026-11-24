@@ -8,13 +8,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-/* Layout idea: a candlelit table at night. Dice tray on the left, the party in initiative order on the right, the roll log underneath. Single dark theme by choice. */
+/* Layout idea: a torchlit stone tavern hall at night. Dice tray on the left, the party in initiative order on the right, the roll log underneath. Single dark theme by choice. */
 :root {
-  --ink: #12141c;        /* table */
-  --slate: #1c2030;      /* panels */
-  --line: #2f3550;       /* borders */
-  --parch: #e9e1cc;      /* text */
-  --dim: #9a9cae;        /* secondary text */
+  --ink: #17110c;        /* dark wood, for inner boxes */
+  --slate: #2a1d13;      /* panels */
+  --line: #4d3824;       /* borders */
+  --parch: #f1e4c8;      /* text */
+  --dim: #b39c7e;        /* secondary text */
   --brass: #d4a64a;      /* accent */
   --crimson: #d2484b;    /* damage / nat 1 */
   --verdant: #5fb37f;    /* healing / success */
@@ -24,7 +24,11 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--ink); color: var(--parch); font-family: var(--body); font-size: 16px; line-height: 1.45; }
-body { background: radial-gradient(ellipse at 30% -10%, #2a2440 0%, transparent 55%), var(--ink); min-height: 100%; }
+/* The stone wall is painted by the script at load (see "Stone wall"), into --wall */
+body { background:
+  radial-gradient(700px 520px at 0 18%, rgba(255, 140, 50, .13), transparent 70%), radial-gradient(700px 520px at 100% 18%, rgba(255, 140, 50, .13), transparent 70%),   /* firelight from the corners, even when the torches are hidden */
+  linear-gradient(rgba(10, 8, 6, .35), rgba(10, 8, 6, .55)), var(--wall, none) 0 0 / 640px 420px, #221d19; background-attachment: fixed; min-height: 100%; }
+html { scrollbar-color: #5a4028 #120c08; }
 h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: .04em; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -32,13 +36,16 @@ button { cursor: pointer; }
 
 header, main { max-width: 1400px; margin: 0 auto; }
 header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px max(16px, 3vw) 8px; }
-header h1 { font-size: 1.7rem; color: var(--brass); font-weight: 800; }
+header h1 { font-size: 1.7rem; color: var(--brass); font-weight: 800; text-shadow: 0 2px 0 #000, 0 0 18px rgba(255, 170, 60, .35); }
 header p { margin: 0; color: var(--dim); font-size: .95rem; }
 
 main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px; padding: 12px max(16px, 3vw) 32px; }
 @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
 
-.panel { background: var(--slate); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel { border: 2px solid #5a4028; outline: 1px solid #0d0906; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0;
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 220, 160, .06);
+  /* dark wood planks: a darkening layer over a generated grain pattern */
+  background: linear-gradient(rgba(20, 13, 8, .55), rgba(20, 13, 8, .55)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='400'%3E %3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .35' numOctaves='4' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.8800000000000001 -0.24750000000000003'/%3E%3C/filter%3E %3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .25 0'/%3E%3C/filter%3E %3Crect x='0' y='0' width='86' height='400' fill='%23271a10'/%3E%3Crect x='0' y='0' width='3' height='400' fill='%23000' opacity='.55'/%3E%3Crect x='3' y='0' width='1' height='400' fill='%23fff' opacity='.06'/%3E%3Crect x='0' y='223' width='86' height='2' fill='%23000' opacity='.45'/%3E%3Crect x='86' y='0' width='86' height='400' fill='%232b1d12'/%3E%3Crect x='86' y='0' width='3' height='400' fill='%23000' opacity='.55'/%3E%3Crect x='89' y='0' width='1' height='400' fill='%23fff' opacity='.06'/%3E%3Crect x='86' y='278' width='86' height='2' fill='%23000' opacity='.45'/%3E%3Crect x='172' y='0' width='86' height='400' fill='%232f2015'/%3E%3Crect x='172' y='0' width='3' height='400' fill='%23000' opacity='.55'/%3E%3Crect x='175' y='0' width='1' height='400' fill='%23fff' opacity='.06'/%3E%3Crect x='172' y='66' width='86' height='2' fill='%23000' opacity='.45'/%3E%3Crect x='258' y='0' width='86' height='400' fill='%232f2015'/%3E%3Crect x='258' y='0' width='3' height='400' fill='%23000' opacity='.55'/%3E%3Crect x='261' y='0' width='1' height='400' fill='%23fff' opacity='.06'/%3E%3Crect x='258' y='97' width='86' height='2' fill='%23000' opacity='.45'/%3E%3Crect x='344' y='0' width='86' height='400' fill='%23271a10'/%3E%3Crect x='344' y='0' width='3' height='400' fill='%23000' opacity='.55'/%3E%3Crect x='347' y='0' width='1' height='400' fill='%23fff' opacity='.06'/%3E%3Crect x='344' y='280' width='86' height='2' fill='%23000' opacity='.45'/%3E%3Crect x='430' y='0' width='86' height='400' fill='%232f2015'/%3E%3Crect x='430' y='0' width='3' height='400' fill='%23000' opacity='.55'/%3E%3Crect x='433' y='0' width='1' height='400' fill='%23fff' opacity='.06'/%3E%3Crect x='430' y='234' width='86' height='2' fill='%23000' opacity='.45'/%3E%3Crect x='516' y='0' width='86' height='400' fill='%232b1d12'/%3E%3Crect x='516' y='0' width='3' height='400' fill='%23000' opacity='.55'/%3E%3Crect x='519' y='0' width='1' height='400' fill='%23fff' opacity='.06'/%3E%3Crect x='516' y='333' width='86' height='2' fill='%23000' opacity='.45'/%3E %3Crect width='100%' height='100%' filter='url(%23w)'/%3E %3Crect width='100%' height='100%' filter='url(%23k)'/%3E %3C/svg%3E") 0 0 / 520px 400px, var(--slate); }
 .panel h2 { font-size: 1.05rem; color: var(--brass); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .sub { color: var(--dim); font-size: .85rem; font-family: var(--body); letter-spacing: 0; font-weight: 500; }
 
@@ -48,9 +55,43 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 .die { background: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: border-color .15s, transform .1s; }
 .die svg { width: 30px; height: 30px; }
 .die span { font-weight: 700; font-size: .9rem; }
-.die[aria-pressed="true"] { border-color: var(--brass); background: #2a2616; }
+.die[aria-pressed="true"] { border-color: var(--brass); background: #3a2a12; }
 .die[aria-pressed="true"] svg path, .die[aria-pressed="true"] svg polygon, .die[aria-pressed="true"] svg rect, .die[aria-pressed="true"] svg circle { stroke: var(--brass); }
 .die:active { transform: scale(.96); }
+.die { position: relative; }
+.die .badge { position: absolute; top: -7px; right: -7px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 99px; background: var(--brass); color: var(--ink); font-size: .78rem; font-weight: 800; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.die .badge:empty { display: none; }
+.die:disabled { opacity: .4; cursor: not-allowed; }
+
+.poolrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 34px; }
+.poollabel { font-size: .8rem; color: var(--dim); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+.poolchip { background: var(--ink); border: 1px solid var(--line); border-radius: 99px; padding: 4px 6px 4px 11px; font-weight: 700; font-size: .9rem; display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.poolchip span { color: var(--dim); font-weight: 400; font-size: .8rem; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
+.poolchip:hover { border-color: var(--crimson); }
+.poolchip:hover span { background: var(--crimson); color: var(--ink); }
+.ghost.small { padding: 4px 10px; font-size: .82rem; }
+
+/* Dice skin button and menu */
+.skin-btn { position: absolute; top: 10px; right: 10px; z-index: 1; background: rgba(23, 17, 12, .8); border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; font-size: .82rem; color: var(--parch); }
+.skin-btn:hover { border-color: var(--brass); }
+dialog.skins { width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 40px); padding: 0; background: var(--slate); color: var(--parch); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 30px 80px -20px #000; }
+dialog.skins[open] { display: flex; flex-direction: column; }
+dialog.skins { background: linear-gradient(var(--slate), #22170f); }
+dialog.skins::backdrop { background: rgba(8, 9, 14, .55); }
+.skins-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.skins-head h2 { color: var(--brass); font-size: 1.1rem; }
+.skins-body { overflow-y: auto; padding: 6px 18px 12px; scrollbar-color: var(--line) transparent; }
+.skins-body h3, .custom h3 { font-family: var(--display); font-size: .85rem; color: var(--dim); letter-spacing: .1em; margin: 14px 0 8px; text-transform: uppercase; }
+.skingrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
+.skin { background: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: .78rem; line-height: 1.2; text-align: center; }
+.skin canvas { width: 54px; height: 54px; }
+.skin:hover { border-color: var(--dim); }
+.skin[aria-pressed="true"] { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); }
+.custom { border-top: 1px solid var(--line); padding: 4px 18px 18px; }
+.customgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; align-items: end; }
+.customgrid input[type="color"] { width: 100%; height: 38px; padding: 3px; cursor: pointer; }
+.customgrid select { background: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--dim); }
@@ -69,7 +110,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 .roll-btn:hover { filter: brightness(1.08); }
 .roll-btn:disabled { opacity: .6; cursor: wait; }
 
-.result { border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; overflow: hidden; }
+.result { background: rgba(0, 0, 0, .22); border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; min-height: 170px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: relative; overflow: hidden; }
 .result .total { font-family: var(--display); font-size: 4.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
 #dieCanvas { width: 100%; height: 300px; display: block; }
 .result .formula { color: var(--dim); font-size: .95rem; font-variant-numeric: tabular-nums; }
@@ -102,7 +143,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 .ac { grid-row: span 2; text-align: center; font-size: .7rem; color: var(--dim); }
 .ac b { display: block; font-family: var(--display); font-size: 1.2rem; color: var(--parch); }
 .hpline { display: flex; align-items: center; gap: 10px; }
-.hpbar { flex: 1; height: 8px; background: #2a2e40; border-radius: 99px; overflow: hidden; }
+.hpbar { flex: 1; height: 8px; background: #0f0a06; border-radius: 99px; overflow: hidden; }
 .hpbar i { display: block; height: 100%; background: var(--verdant); transition: width .3s; }
 .hpbar i.mid { background: var(--brass); }
 .hpbar i.low { background: var(--crimson); }
@@ -114,7 +155,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); g
 .mini.heal { color: var(--verdant); }
 .mini:hover { border-color: var(--parch); }
 .cardctl select { background: var(--slate); border: 1px solid var(--line); border-radius: 6px; padding: 5px 6px; font-size: .82rem; color: var(--dim); }
-.chip { background: #33293d; border: 0; border-radius: 99px; padding: 3px 9px; font-size: .75rem; color: #e4c9f2; }
+.chip { background: #4a2f3a; border: 0; border-radius: 99px; padding: 3px 9px; font-size: .75rem; color: #f4d6e4; }
 .chip.downchip { background: var(--crimson); color: var(--ink); font-weight: 700; }
 .chip:hover { text-decoration: line-through; }
 .del { margin-left: auto; background: none; border: 0; color: var(--dim); font-size: .8rem; }
@@ -136,12 +177,60 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
 .log li.fumble b { color: var(--crimson); }
 .empty { color: var(--dim); font-style: italic; margin: 0; }
 
+
+/* Wall torches in the side margins, with flickering firelight (wide screens only) */
+.torch { position: fixed; top: 130px; width: 60px; height: 200px; z-index: 0; pointer-events: none; }
+.t-left { left: max(10px, calc(50% - 790px)); }
+.t-right { right: max(10px, calc(50% - 790px)); }
+.torch > i { position: absolute; display: block; }
+.torch .glow { left: 50%; top: 40px; width: 640px; height: 640px; margin: -320px 0 0 -320px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 170, 70, .55) 0%, rgba(255, 130, 50, .26) 25%, rgba(255, 110, 40, .10) 50%, transparent 70%);
+  animation: glow 2.3s ease-in-out infinite alternate; }
+.torch .sconce { left: 12px; top: 120px; width: 36px; height: 54px; background: linear-gradient(90deg, #121214, #3a3a40 45%, #18181b);
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 62% 30%, 62% 100%, 38% 100%, 38% 30%, 0 30%); border-radius: 3px; }   /* iron wall bracket */
+.torch .handle { left: 22px; top: 52px; width: 16px; height: 92px; background: linear-gradient(90deg, #2a170b, #7a4c28 45%, #3a2210);
+  clip-path: polygon(0 0, 100% 0, 78% 100%, 22% 100%); }
+.torch .handle::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 16px; background: linear-gradient(#24120a, #3e2412); }   /* pitch-soaked wrap */
+.torch .flame { position: absolute; left: 6px; top: -34px; width: 48px; height: 92px; overflow: visible; filter: drop-shadow(0 0 7px rgba(255, 140, 40, .8)); }
+.torch .flame path { transform-box: fill-box; transform-origin: 50% 100%; }
+.torch .f-outer { animation: lick 1.1s ease-in-out infinite alternate; }
+.torch .f-mid { animation: lick 0.8s ease-in-out infinite alternate-reverse; }
+.torch .f-core { animation: core 0.6s ease-in-out infinite alternate; }
+.t-right .flame path { animation-delay: -.37s; }   /* so the two torches don't flicker in step */
+.torch .ember { left: 30px; top: 0; width: 3px; height: 3px; border-radius: 50%; background: #ffcf70; box-shadow: 0 0 4px #ff9a2e; opacity: 0; animation: ember 2.6s linear infinite; }
+.torch .ember.e2 { animation-delay: -.9s; left: 24px; }
+.torch .ember.e3 { animation-delay: -1.7s; left: 34px; }
+@keyframes lick { 0% { transform: scale(1, 1) skewX(0deg); } 30% { transform: scale(.94, 1.07) skewX(4deg); } 60% { transform: scale(1.05, .95) skewX(-3deg); } 100% { transform: scale(.97, 1.1) skewX(2deg); } }
+@keyframes core { from { transform: scale(1, 1); } to { transform: scale(.9, 1.12); } }
+@keyframes glow { 0% { opacity: .8; transform: scale(.98); } 45% { opacity: 1; transform: scale(1.02); } 100% { opacity: .88; transform: scale(1); } }
+@keyframes ember { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate(-8px, -90px); opacity: 0; } }
+@media (max-width: 1560px) { .torch { display: none; } }
+header, main { position: relative; z-index: 1; }
+
 @keyframes flare { from { transform: scale(1.35); } to { transform: scale(1); } }
 .result.crit .total, .result.fumble .total { animation: flare .35s ease-out; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
+<!-- Shapes shared by both torches -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="fo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff7a1a"/><stop offset=".6" stop-color="#e2401a"/><stop offset="1" stop-color="#a51e0e" stop-opacity=".2"/></linearGradient>
+    <linearGradient id="fm" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd25a"/><stop offset=".7" stop-color="#ff9a2a"/><stop offset="1" stop-color="#ff7a1a" stop-opacity=".4"/></linearGradient>
+    <linearGradient id="fc" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#ffe9a0"/></linearGradient>
+  </defs>
+</svg>
+<div class="torch t-left" aria-hidden="true"><i class="glow"></i><i class="sconce"></i><i class="handle"></i><svg class="flame" viewBox="0 0 40 66">
+    <path class="f-outer" fill="url(#fo)" d="M21 0 C22 9 26 13 29 20 C30 16 30 12 29 7 C36 16 39 28 37 40 C35 54 29 64 20 64 C11 64 4 55 3 43 C2 33 7 25 10 18 C10 23 11 26 13 29 C13 18 17 9 21 0 Z"/>
+    <path class="f-mid" fill="url(#fm)" d="M19 13 C21 21 27 27 28 38 C29 50 25 59 20 59 C15 59 11 52 11 42 C11 35 14 31 16 26 C17 30 18 32 19 33 C18 26 18 20 19 13 Z"/>
+    <path class="f-core" fill="url(#fc)" d="M20 33 C22 40 25 44 25 50 C25 55 23 59 20 59 C17 59 15 55 15 51 C15 46 18 41 20 33 Z"/>
+  </svg><i class="ember"></i><i class="ember e2"></i><i class="ember e3"></i></div>
+<div class="torch t-right" aria-hidden="true"><i class="glow"></i><i class="sconce"></i><i class="handle"></i><svg class="flame" viewBox="0 0 40 66">
+    <path class="f-outer" fill="url(#fo)" d="M21 0 C22 9 26 13 29 20 C30 16 30 12 29 7 C36 16 39 28 37 40 C35 54 29 64 20 64 C11 64 4 55 3 43 C2 33 7 25 10 18 C10 23 11 26 13 29 C13 18 17 9 21 0 Z"/>
+    <path class="f-mid" fill="url(#fm)" d="M19 13 C21 21 27 27 28 38 C29 50 25 59 20 59 C15 59 11 52 11 42 C11 35 14 31 16 26 C17 30 18 32 19 33 C18 26 18 20 19 13 Z"/>
+    <path class="f-core" fill="url(#fc)" d="M20 33 C22 40 25 44 25 50 C25 55 23 59 20 59 C17 59 15 55 15 51 C15 46 18 41 20 33 Z"/>
+  </svg><i class="ember"></i><i class="ember e2"></i><i class="ember e3"></i></div>
 <header>
   <h1>Tavern Table</h1>
   <p>Roll dice, track the party, and run the fight.</p>
@@ -151,16 +240,15 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
   <!-- DICE TRAY -->
   <section class="panel" aria-labelledby="tray-h">
     <h2 id="tray-h">Dice tray <span class="sub" id="pickedLabel">1d20</span></h2>
-    <div class="dice" id="dice" role="group" aria-label="Choose a die"></div>
+    <div class="dice" id="dice" role="group" aria-label="Tap a die to add it to the roll"></div>
+
+    <div class="poolrow">
+      <span class="poollabel">Rolling</span>
+      <div class="chips" id="pool" aria-live="polite"></div>
+      <button class="ghost small" id="clearPool" type="button">Clear</button>
+    </div>
 
     <div class="controls">
-      <div class="field">How many
-        <div class="stepper">
-          <button type="button" id="countDown" aria-label="Fewer dice">−</button>
-          <output id="count">1</output>
-          <button type="button" id="countUp" aria-label="More dice">+</button>
-        </div>
-      </div>
       <div class="field">Modifier
         <div class="stepper">
           <button type="button" id="modDown" aria-label="Lower modifier">−</button>
@@ -189,6 +277,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     <button class="roll-btn" id="rollBtn" type="button">Roll</button>
 
     <div class="result" id="result" aria-live="polite">
+      <button class="skin-btn" id="skinBtn" type="button" aria-haspopup="dialog">🎨 Dice skin</button>
       <canvas id="dieCanvas" aria-hidden="true"></canvas>
       <span class="tag" id="tag" hidden></span>
       <div class="total" id="total">20</div>
@@ -230,6 +319,44 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
   </section>
 </main>
 
+<!-- DICE SKIN MENU -->
+<dialog class="skins" id="skinMenu" aria-labelledby="skin-h">
+  <div class="skins-head">
+    <h2 id="skin-h">Choose a dice skin</h2>
+    <button class="ghost" id="skinDone" type="button">Done</button>
+  </div>
+  <div class="skins-body" id="skinList"></div>
+  <section class="custom" aria-labelledby="custom-h">
+    <h3 id="custom-h">Make your own</h3>
+    <div class="customgrid">
+      <label class="field">Body<input type="color" id="cBody"></label>
+      <label class="field">Accent<input type="color" id="cAccent"></label>
+      <label class="field">Edges<input type="color" id="cEdge"></label>
+      <label class="field">Numbers<input type="color" id="cInk"></label>
+      <label class="field">Pattern
+        <select id="cPattern">
+          <option value="solid">Solid</option>
+          <option value="camo">Camo</option>
+          <option value="digital">Digital camo</option>
+          <option value="marble">Marble</option>
+          <option value="wood">Wood grain</option>
+          <option value="speckle">Speckled</option>
+          <option value="galaxy">Galaxy</option>
+          <option value="stripes">Tiger stripe</option>
+        </select>
+      </label>
+      <label class="field">Finish
+        <select id="cFinish">
+          <option value="matte">Matte</option>
+          <option value="satin">Satin</option>
+          <option value="gloss">Glossy</option>
+          <option value="metal">Metal</option>
+        </select>
+      </label>
+    </div>
+  </section>
+</dialog>
+
 <script>
 (() => {
   const SIDES = [4, 6, 8, 10, 12, 20, 100];
@@ -263,17 +390,30 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
   try { const saved = JSON.parse(localStorage.getItem(STORE)); if (saved && Array.isArray(saved.party)) state = saved; } catch (e) {}
   const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
 
-  const tray = { sides: 20, count: 1, mod: 0, mode: "norm" };
-  const $ = id => document.getElementById(id);
-
   /* ---------- Dice tray ---------- */
-  $("dice").innerHTML = SIDES.map(s => `<button type="button" class="die" data-s="${s}" aria-pressed="${s === 20}"><svg viewBox="0 0 30 30" aria-hidden="true">${ICONS[s]}</svg><span>d${s}</span></button>`).join("");
-  $("dice").addEventListener("click", e => {
-    const b = e.target.closest(".die"); if (!b) return;
-    tray.sides = +b.dataset.s; syncTray();
+  // The pool: how many of each die are in this roll, e.g. { 6: 2, 8: 1 } for 2d6 + 1d8
+  const MAX_DICE = 20;
+  const tray = { pool: { 20: 1 }, mod: 0, mode: "norm" };
+  const $ = id => document.getElementById(id);
+  const poolTotal = () => SIDES.reduce((n, s) => n + (tray.pool[s] || 0), 0);
+  const poolTypes = () => SIDES.filter(s => tray.pool[s]);
+  const poolText = () => poolTypes().map(s => `${tray.pool[s]}d${s}`).join(" + ");
+
+  $("dice").innerHTML = SIDES.map(s => `<button type="button" class="die" data-s="${s}" aria-label="Add a d${s}"><svg viewBox="0 0 30 30" aria-hidden="true">${ICONS[s]}</svg><span>d${s}</span><b class="badge" aria-hidden="true"></b></button>`).join("");
+  $("dice").addEventListener("click", e => {          // tap a die: add one to the pool
+    const b = e.target.closest(".die"); if (!b || poolTotal() >= MAX_DICE) return;
+    const s = +b.dataset.s;
+    tray.pool[s] = (tray.pool[s] || 0) + 1; syncTray();
   });
-  $("countUp").onclick = () => { tray.count = Math.min(20, tray.count + 1); syncTray(); };
-  $("countDown").onclick = () => { tray.count = Math.max(1, tray.count - 1); syncTray(); };
+  $("pool").addEventListener("click", e => {          // tap a chip: take one of that die away
+    const b = e.target.closest(".poolchip"); if (!b) return;
+    const s = +b.dataset.s;
+    tray.pool[s]--; if (!tray.pool[s]) delete tray.pool[s];
+    syncTray();
+    const same = $("pool").querySelector(`[data-s="${s}"]`) || $("pool").querySelector(".poolchip");
+    (same || $("dice").querySelector(".die")).focus();   // keep keyboard focus somewhere sensible
+  });
+  $("clearPool").onclick = () => { tray.pool = {}; syncTray(); };
   $("modUp").onclick = () => { tray.mod = Math.min(30, tray.mod + 1); syncTray(); };
   $("modDown").onclick = () => { tray.mod = Math.max(-10, tray.mod - 1); syncTray(); };
   $("mode").addEventListener("click", e => {
@@ -281,10 +421,21 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     tray.mode = b.dataset.mode; syncTray();
   });
 
-  function advAllowed() { return tray.sides === 20 && tray.count === 1; }
+  function advAllowed() { return poolTotal() === 1 && tray.pool[20] === 1; }   // only a single d20
+  let rolling = false;
+  function syncRollBtn() { $("rollBtn").disabled = rolling || poolTotal() === 0; }
   function syncTray() {
-    document.querySelectorAll(".die").forEach(b => b.setAttribute("aria-pressed", +b.dataset.s === tray.sides));
-    $("count").textContent = tray.count;
+    const total = poolTotal();
+    document.querySelectorAll(".die").forEach(b => {
+      const n = tray.pool[+b.dataset.s] || 0;
+      b.querySelector(".badge").textContent = n || "";
+      b.disabled = total >= MAX_DICE;
+      b.setAttribute("aria-label", `Add a d${b.dataset.s}${n ? ` (${n} in the roll)` : ""}`);
+    });
+    $("pool").innerHTML = total
+      ? poolTypes().map(s => `<button type="button" class="poolchip" data-s="${s}" aria-label="Remove one d${s}">${tray.pool[s]}d${s}<span aria-hidden="true">✕</span></button>`).join("")
+      : `<span class="empty">Tap dice above to add them</span>`;
+    $("clearPool").hidden = !total;
     $("mod").textContent = fmtMod(tray.mod);
     const ok = advAllowed();
     if (!ok) tray.mode = "norm";
@@ -292,31 +443,37 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
       b.disabled = !ok && b.dataset.mode !== "norm";
       b.setAttribute("aria-pressed", b.dataset.mode === tray.mode);
     });
-    $("pickedLabel").textContent = `${tray.count}d${tray.sides}${tray.mod ? " " + fmtMod(tray.mod) : ""}${tray.mode === "adv" ? " · advantage" : tray.mode === "dis" ? " · disadvantage" : ""}`;
-    const shownDice = tray.mode !== "norm" ? 2 : tray.count;   // advantage/disadvantage rolls two d20s
-    document.dispatchEvent(new CustomEvent("tray:change", { detail: { sides: tray.sides, count: shownDice } }));
+    $("pickedLabel").textContent = total
+      ? `${poolText()}${tray.mod ? " " + fmtMod(tray.mod) : ""}${tray.mode === "adv" ? " · advantage" : tray.mode === "dis" ? " · disadvantage" : ""}`
+      : "no dice";
+    syncRollBtn();
+    // Every die to show on the table, in order. Advantage/disadvantage rolls two d20s.
+    const shown = tray.mode !== "norm" ? [20, 20] : poolTypes().flatMap(s => Array(tray.pool[s]).fill(s));
+    window.tavernDice = shown;                    // the 3D dice pick this up when they load
+    document.dispatchEvent(new CustomEvent("tray:change", { detail: { dice: shown } }));
   }
 
   function doRoll() {
-    const { sides, count, mod, mode } = tray;
-    let dice, kept, natural = null, parts;
-    if (sides === 20 && count === 1 && mode !== "norm") {
+    const { mod, mode } = tray;
+    let values, kept, natural = null, parts;
+    if (advAllowed() && mode !== "norm") {
       const a = d(20), b = d(20);
       kept = mode === "adv" ? Math.max(a, b) : Math.min(a, b);
       natural = kept;
       const keepFirst = (mode === "adv" ? a >= b : a <= b);
       parts = `[<span class="${keepFirst ? "kept" : "dropped"}">${a}</span>, <span class="${keepFirst ? "dropped" : "kept"}">${b}</span>]`;
-      dice = [a, b];
+      values = [a, b];
     } else {
-      dice = Array.from({ length: count }, () => d(sides));
-      kept = dice.reduce((s, x) => s + x, 0);
-      if (sides === 20 && count === 1) natural = kept;
-      parts = `[${dice.join(", ")}]`;
+      const groups = poolTypes().map(s => Array.from({ length: tray.pool[s] }, () => d(s)));  // one list of rolls per die type
+      values = groups.flat();                       // same order as the dice on the table
+      kept = values.reduce((sum, x) => sum + x, 0);
+      if (advAllowed()) natural = kept;
+      parts = groups.map(g => `[${g.join(", ")}]`).join(" + ");
     }
     const total = kept + mod;
     const kind = natural === 20 ? "crit" : natural === 1 ? "fumble" : "";
-    const label = `${count}d${sides}${mod ? " " + fmtMod(mod) : ""}${mode === "adv" ? " adv" : mode === "dis" ? " dis" : ""}`;
-    return { total, natural, kind, label, parts, mod, sides, count, mode, dice };
+    const label = `${poolText()}${mod ? " " + fmtMod(mod) : ""}${mode === "adv" ? " adv" : mode === "dis" ? " dis" : ""}`;
+    return { total, natural, kind, label, parts, mod, mode, dice: values };
   }
 
   function rollerName() {
@@ -333,9 +490,9 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     const wait = reduce ? 0 : ROLL_MS;            // no tumble for people who turn animations off
     $("result").className = "result rolling";
     $("tag").hidden = true;
-    $("rollBtn").disabled = true;
+    rolling = true; syncRollBtn();
     document.dispatchEvent(new CustomEvent("die:roll", { detail: { duration: wait, values: r.dice } }));
-    setTimeout(() => { showRoll(r); $("rollBtn").disabled = false; }, wait); // ...and shown when the die lands
+    setTimeout(() => { showRoll(r); rolling = false; syncRollBtn(); }, wait); // ...and shown when the die lands
   };
 
   function showRoll(r) {
@@ -420,7 +577,7 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
     if (act === "hit") p.hp = Math.max(0, p.hp - amt);
     else if (act === "heal") p.hp = Math.min(p.maxhp, p.hp + amt);
     else if (act === "use") {
-      $("roller").value = p.id; tray.sides = 20; tray.count = 1; tray.mod = p.init; syncTray();
+      $("roller").value = p.id; tray.pool = { 20: 1 }; tray.mod = p.init; syncTray();
       $("action").focus(); return;
     }
     else if (act === "del") {
@@ -474,15 +631,279 @@ details.add summary { cursor: pointer; color: var(--brass); font-weight: 700; }
   }
   $("clearLog").onclick = () => { state.log = []; save(); renderLog(); };
 
+  /* ---------- Dice skins ---------- */
+  // colors: [body, accent, accent2, accent3]. How the accents are used depends on the pattern.
+  // finish: matte, satin, gloss or metal (how shiny the dice are)
+  const S = (id, name, group, pattern, colors, edge, ink, finish) => ({ id, name, group, pattern, colors, edge, ink, finish });
+  const SKINS = [
+    S("midnight", "Midnight Brass", "Classic", "solid", ["#2a2440"], "#d4a64a", "#d4a64a", "satin"),
+    S("obsidian", "Obsidian", "Classic", "solid", ["#121216"], "#9fa4b4", "#eef0f6", "gloss"),
+    S("bone", "Old Bone", "Classic", "speckle", ["#e6dcc3", "#c9b994", "#a8956b"], "#6b5838", "#2b2116", "matte"),
+    S("ivory", "Ivory", "Classic", "solid", ["#f1ead8"], "#b08a3e", "#7a1b1b", "satin"),
+    S("blood", "Blood Oath", "Classic", "solid", ["#6e0d16"], "#e0b45a", "#f3d48a", "gloss"),
+    S("royal", "Royal Blue", "Classic", "solid", ["#1d2a6b"], "#e6e8f0", "#ffffff", "satin"),
+    S("ranger", "Ranger Green", "Classic", "solid", ["#1f3b2a"], "#c8a35a", "#f0e2b8", "satin"),
+
+    S("ruby", "Ruby", "Gemstones", "solid", ["#9b111e"], "#ffd0d6", "#fff1f3", "gloss"),
+    S("sapphire", "Sapphire", "Gemstones", "solid", ["#0f3f9e"], "#cfe0ff", "#ffffff", "gloss"),
+    S("emerald", "Emerald", "Gemstones", "solid", ["#0b6b43"], "#d9ffe9", "#f2fff7", "gloss"),
+    S("amethyst", "Amethyst", "Gemstones", "solid", ["#5e2a91"], "#ead7ff", "#ffffff", "gloss"),
+    S("topaz", "Topaz", "Gemstones", "solid", ["#c8861a"], "#fff0c8", "#3a2408", "gloss"),
+    S("jade", "Jade", "Gemstones", "marble", ["#3f8f68", "#c9eed8", "#1f5a3e"], "#e6f7ec", "#0f2e1f", "gloss"),
+
+    S("gold", "Gold", "Metals", "solid", ["#c9a34a"], "#fff1c4", "#3b2a08", "metal"),
+    S("silver", "Silver", "Metals", "solid", ["#c4c8d0"], "#ffffff", "#1d2028", "metal"),
+    S("copper", "Copper", "Metals", "solid", ["#b46a3c"], "#ffd9bf", "#2a140a", "metal"),
+    S("gunmetal", "Gunmetal", "Metals", "solid", ["#4a4f58"], "#aab0bb", "#e9edf3", "metal"),
+    S("dwarven", "Dwarven Iron", "Metals", "speckle", ["#3a3a3e", "#56565c", "#2a2a2d"], "#d07a2c", "#ffb35c", "metal"),
+
+    S("woodland", "Woodland", "Camo", "camo", ["#56603a", "#2f3a22", "#7a6a45", "#1c1d17"], "#1c1d17", "#e9e1cc", "matte"),
+    S("jungle", "Jungle", "Camo", "camo", ["#3c5a2b", "#1e2e16", "#6f8a3a", "#2d1f12"], "#15200f", "#e8f0c8", "matte"),
+    S("desert", "Desert", "Camo", "camo", ["#cdb68a", "#a8885c", "#8a6a46", "#e0cfa6"], "#5b4630", "#3a2a1a", "matte"),
+    S("arctic", "Arctic", "Camo", "camo", ["#eef1f3", "#c3ccd3", "#8e9aa4", "#566069"], "#3d454c", "#1f262c", "matte"),
+    S("urban", "Urban", "Camo", "camo", ["#8a8d91", "#5d6064", "#b9bcbf", "#2e3034"], "#1d1f22", "#f2f2f2", "matte"),
+    S("digiwood", "Digital Woodland", "Camo", "digital", ["#5e6b45", "#3a4429", "#8a7b55", "#23271b"], "#23271b", "#efe6c8", "matte"),
+    S("digisand", "Digital Desert", "Camo", "digital", ["#c9b48a", "#a48b62", "#e2d4ae", "#7d6647"], "#4d3c2a", "#2e2216", "matte"),
+    S("diginavy", "Digital Navy", "Camo", "digital", ["#2b3d5e", "#1a263d", "#4b6489", "#0e1524"], "#9fb3d1", "#e8eefa", "matte"),
+    S("pinkcamo", "Pink Camo", "Camo", "camo", ["#f2a7c3", "#d96b98", "#f7cfe0", "#a8436f"], "#5a1a35", "#ffffff", "matte"),
+    S("blaze", "Hunter Blaze", "Camo", "camo", ["#ff6a13", "#c74a00", "#3a2a1a", "#ff9a4a"], "#2a1a0e", "#ffffff", "matte"),
+    S("tiger", "Tiger Stripe", "Camo", "stripes", ["#d98a2b", "#1a120b"], "#1a120b", "#fff4e0", "satin"),
+
+    S("marble", "White Marble", "Stone & Wood", "marble", ["#ecebe6", "#4a4a4e", "#c9c7c0"], "#8a8780", "#222222", "gloss"),
+    S("blackmarble", "Black Marble", "Stone & Wood", "marble", ["#16161a", "#d4a64a", "#2e2e36"], "#d4a64a", "#f3d48a", "gloss"),
+    S("frost", "Frost", "Stone & Wood", "marble", ["#cfe6f2", "#ffffff", "#8fbcd6"], "#ffffff", "#1f4a66", "gloss"),
+    S("lava", "Lava Rock", "Stone & Wood", "marble", ["#1a0d0a", "#ff5a1f", "#5a1a0a"], "#ff8a3d", "#ffd27a", "satin"),
+    S("granite", "Granite", "Stone & Wood", "speckle", ["#6b6b6b", "#2a2a2a", "#bdbdbd", "#9a8e80"], "#d9d9d9", "#ffffff", "satin"),
+    S("oak", "Oak", "Stone & Wood", "wood", ["#b07b46", "#7a4f28"], "#3e2814", "#2a1a0c", "satin"),
+    S("walnut", "Walnut", "Stone & Wood", "wood", ["#5a3a22", "#2f1d10"], "#d4a64a", "#f0d9a8", "satin"),
+
+    S("galaxy", "Galaxy", "Cosmic", "galaxy", ["#0b0a1f", "#5b2a8c", "#1f6aa8"], "#c9b8ff", "#ffffff", "gloss"),
+    S("nebula", "Nebula", "Cosmic", "galaxy", ["#140814", "#c2366b", "#f08a3c"], "#ffd0e0", "#ffffff", "gloss"),
+    S("deepsea", "Deep Sea", "Cosmic", "galaxy", ["#03141c", "#0f5e6e", "#1fa38a"], "#9ff0e0", "#e8fffb", "gloss"),
+    S("aurora", "Aurora", "Cosmic", "galaxy", ["#061018", "#1fbf7a", "#7a3fd0"], "#c8ffe6", "#ffffff", "gloss")
+  ];
+
+  // --- Painting a skin's pattern onto a square canvas. The patterns tile seamlessly, so they wrap around the dice.
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const mix = (a, b, t) => [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * t);
+  const shade = (c, k) => c.map(x => Math.min(255, x * k));
+  const smooth = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  function seeded(seed) { return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
+  // Smooth random "cloudy" values from 0 to 1 that repeat every 1 unit in u and v
+  function cloudy(rand, base = 4, octaves = 4) {
+    const layers = Array.from({ length: octaves }, (_, k) => {
+      const n = base << k;
+      return { n, g: Float32Array.from({ length: n * n }, rand) };
+    });
+    const ease = t => t * t * (3 - 2 * t);
+    return (u, v) => {
+      let sum = 0, amp = 0.5, total = 0;
+      for (const { n, g } of layers) {
+        const x = u * n, y = v * n, x0 = Math.floor(x), y0 = Math.floor(y), fx = ease(x - x0), fy = ease(y - y0);
+        const at = (i, j) => g[((j % n + n) % n) * n + ((i % n + n) % n)];
+        const top = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * fx;
+        const bot = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * fx;
+        sum += (top + (bot - top) * fy) * amp; total += amp; amp *= 0.5;
+      }
+      return sum / total;
+    };
+  }
+  function paintSkin(skin, size = 256) {
+    const c = document.createElement("canvas"); c.width = c.height = size;
+    const ctx = c.getContext("2d");
+    const img = ctx.createImageData(size, size);
+    const col = skin.colors.map(hex);
+    const [body, a1 = body, a2 = a1, a3 = a2] = col;
+    const rand = seeded([...skin.id].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7) >>> 0);
+    const f = cloudy(rand), f2 = cloudy(rand, 2, 3);
+    const layers = skin.pattern === "camo" || skin.pattern === "digital"
+      ? col.slice(1).map(() => cloudy(rand, 3, 4)) : [];
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      let u = x / size, v = y / size, px;
+      switch (skin.pattern) {
+        case "digital": u = Math.floor(u * 48) / 48; v = Math.floor(v * 48) / 48;   // chunky pixels, then same as camo
+        // falls through
+        case "camo": {
+          px = body;
+          layers.forEach((n, i) => { if (n(u, v) > 0.53) px = col[i + 1]; });   // overlapping blobs of each color
+          break;
+        }
+        case "marble": {
+          const vein = Math.pow(1 - Math.abs(Math.sin(Math.PI * 2 * (2 * u + v + 2.5 * f(u, v)))), 9);
+          px = mix(mix(body, a2, smooth(0.4, 0.8, f2(u, v)) * 0.6), a1, vein);
+          break;
+        }
+        case "wood": {
+          const ring = (8 * v + 3 * f(u, v)) % 1;
+          px = mix(body, a1, Math.pow(ring, 3) * 0.85);
+          px = shade(px, 0.92 + 0.16 * f2(u * 1, v));
+          break;
+        }
+        case "stripes": {
+          const s = Math.sin(Math.PI * 2 * (3 * u + 1.6 * f(u, v)));
+          px = mix(body, a1, smooth(0.45, 0.6, s));
+          break;
+        }
+        case "galaxy": {
+          px = mix(body, a1, smooth(0.45, 0.78, f(u, v)) * 0.9);
+          px = mix(px, a2, smooth(0.5, 0.8, f2(u, v)) * 0.7);
+          break;
+        }
+        default: px = shade(body, 0.95 + 0.1 * f(u, v));   // solid and speckle: gentle cloudiness
+      }
+      const i = (y * size + x) * 4;
+      img.data[i] = px[0]; img.data[i + 1] = px[1]; img.data[i + 2] = px[2]; img.data[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    const dots = (count, colors, rMin, rMax) => {    // little dots, drawn wrapped around the edges so they tile
+      for (let k = 0; k < count; k++) {
+        const x = rand() * size, y = rand() * size, r = (rMin + rand() * (rMax - rMin)) * size / 256;
+        ctx.fillStyle = colors[Math.floor(rand() * colors.length)];
+        for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) {
+          ctx.beginPath(); ctx.arc(x + ox, y + oy, r, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    };
+    if (skin.pattern === "speckle") dots(900, skin.colors.slice(1), 0.6, 2.2);
+    if (skin.pattern === "galaxy") { dots(260, ["#ffffff", "#e8e4ff", "#fff3d6"], 0.3, 1.1); dots(14, ["#ffffff"], 1.4, 2.2); }
+    return c;
+  }
+
+  // --- The skin menu
+  const DEFAULT_SKIN = "midnight";
+  const skinById = id => id === "custom" && state.customSkin ? { ...state.customSkin, id: "custom", name: "Custom" }
+    : SKINS.find(s => s.id === id) || SKINS[0];
+  function applySkin(skin) {
+    const detail = { skin, canvas: paintSkin(skin) };
+    window.tavernSkin = detail;                     // the 3D dice pick this up when they load
+    document.dispatchEvent(new CustomEvent("skin:change", { detail }));
+  }
+  function chooseSkin(id) {
+    state.skin = id; save();
+    applySkin(skinById(id));
+    document.querySelectorAll(".skin").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === id));
+    fillCustom(skinById(id));
+  }
+
+  // A soft outline behind the numbers, dark for light numbers and light for dark ones, so they read on busy patterns
+  function outlineFor(ink) {
+    const [r, g, b] = hex(ink);
+    return (r * 0.3 + g * 0.59 + b * 0.11) > 128 ? "rgba(0,0,0,.55)" : "rgba(255,255,255,.4)";
+  }
+  window.tavernOutline = outlineFor;              // the 3D numbers use the same outline
+
+  function previewTile(skin) {                      // a little d20-ish hexagon in the skin's colors
+    const c = document.createElement("canvas"), px = 108;
+    c.width = c.height = px;
+    const ctx = c.getContext("2d");
+    const hexPath = () => {
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; ctx.lineTo(54 + Math.cos(a) * 48, 54 + Math.sin(a) * 48); }
+      ctx.closePath();
+    };
+    hexPath(); ctx.save(); ctx.clip();
+    ctx.drawImage(paintSkin(skin, 216), 54, 54, 108, 108, 0, 0, px, px);   // zoomed in, about how much of the pattern one die face shows
+    if (skin.finish === "gloss" || skin.finish === "metal") {   // a soft highlight so shiny skins read as shiny
+      const g = ctx.createLinearGradient(0, 0, px, px);
+      g.addColorStop(0, "rgba(255,255,255,.35)"); g.addColorStop(.45, "rgba(255,255,255,0)");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, px, px);
+    }
+    ctx.restore();
+    hexPath(); ctx.strokeStyle = skin.edge; ctx.lineWidth = 4; ctx.stroke();
+    ctx.font = "bold 40px Georgia, serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.lineWidth = 6; ctx.lineJoin = "round"; ctx.strokeStyle = outlineFor(skin.ink);
+    ctx.strokeText("20", 54, 57);
+    ctx.fillStyle = skin.ink; ctx.fillText("20", 54, 57);
+    return c;
+  }
+  function buildSkinMenu() {
+    const groups = [...new Set(SKINS.map(s => s.group))];
+    $("skinList").innerHTML = groups.map(g => `<h3>${esc(g)}</h3><div class="skingrid">${
+      SKINS.filter(s => s.group === g).map(s => `<button type="button" class="skin" data-id="${s.id}" aria-pressed="${s.id === (state.skin || DEFAULT_SKIN)}"><span>${esc(s.name)}</span></button>`).join("")
+    }</div>`).join("");
+    document.querySelectorAll(".skin").forEach(b => b.prepend(previewTile(skinById(b.dataset.id))));
+  }
+  $("skinList").addEventListener("click", e => {
+    const b = e.target.closest(".skin"); if (b) chooseSkin(b.dataset.id);
+  });
+  $("skinBtn").onclick = () => {
+    if (!$("skinList").children.length) buildSkinMenu();   // draw the previews the first time the menu opens
+    $("skinMenu").showModal();
+  };
+  $("skinDone").onclick = () => $("skinMenu").close();
+  $("skinMenu").addEventListener("click", e => { if (e.target === $("skinMenu")) $("skinMenu").close(); });  // click outside to close
+
+  // --- Make your own: color pickers and a pattern. Starts from whichever skin is chosen.
+  const customFields = { cBody: "body", cAccent: "accent", cEdge: "edge", cInk: "ink", cPattern: "pattern", cFinish: "finish" };
+  function fillCustom(skin) {
+    $("cBody").value = skin.colors[0]; $("cAccent").value = skin.colors[1] || skin.colors[0];
+    $("cEdge").value = skin.edge; $("cInk").value = skin.ink;
+    $("cPattern").value = skin.pattern; $("cFinish").value = skin.finish;
+  }
+  let customFrame = 0;
+  Object.keys(customFields).forEach(id => $(id).addEventListener("input", () => {
+    cancelAnimationFrame(customFrame);              // dragging a color wheel fires lots of events; repaint once per frame
+    customFrame = requestAnimationFrame(() => {
+      const body = $("cBody").value, accent = $("cAccent").value;
+      const darker = "#" + hex(accent).map(x => Math.round(x * 0.6).toString(16).padStart(2, "0")).join("");
+      const lighter = "#" + mix(hex(body), [255, 255, 255], 0.35).map(x => Math.round(x).toString(16).padStart(2, "0")).join("");
+      state.customSkin = S("custom", "Custom", "Custom", $("cPattern").value, [body, accent, darker, lighter], $("cEdge").value, $("cInk").value, $("cFinish").value);
+      chooseSkin("custom");
+    });
+  }));
+
+
+  /* ---------- Stone wall ---------- */
+  // Paint a tile of rough stone blocks once, and hand it to the page background (the CSS --wall variable).
+  // It tiles seamlessly: the blocks wrap around left to right, and the rows fit the height exactly.
+  function paintStoneWall() {
+    const W = 640, H = 420, ROW = 60;
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    const rand = seeded(11);
+    const stones = ["#3b3733", "#35312d", "#423c35", "#2f2c29", "#3d3832", "#46403a"];
+    ctx.fillStyle = "#1a1714"; ctx.fillRect(0, 0, W, H);      // mortar
+    for (let y = 0; y < H; y += ROW) {
+      let x = -Math.floor(rand() * 60);                       // stagger each row
+      while (x < W) {
+        const w = 70 + Math.floor(rand() * 80), r = 4 + rand() * 8;
+        const color = stones[Math.floor(rand() * stones.length)];
+        for (const ox of [0, W, -W]) {                        // draw wrapped copies so the tile repeats cleanly
+          ctx.fillStyle = color; ctx.beginPath(); ctx.roundRect(x + ox + 3, y + 3, w - 6, ROW - 6, r); ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.fillRect(x + ox + 6, y + 4, w - 12, 3);          // light top edge
+          ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(x + ox + 6, y + ROW - 8, w - 12, 4);          // shadowed bottom edge
+        }
+        x += w;
+      }
+    }
+    // Weathering: big soft blotches plus fine grit
+    const img = ctx.getImageData(0, 0, W, H), blotch = cloudy(rand, 6, 4);
+    for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+      const i = (py * W + px) * 4;
+      const k = 0.78 + 0.42 * blotch(px / W, py / H) + (rand() - 0.5) * 0.16;
+      img.data[i] *= k; img.data[i + 1] *= k; img.data[i + 2] *= k;
+    }
+    ctx.putImageData(img, 0, 0);
+    document.documentElement.style.setProperty("--wall", `url(${c.toDataURL()})`);
+  }
+  paintStoneWall();
+
+  applySkin(skinById(state.skin || DEFAULT_SKIN));
+  fillCustom(skinById(state.skin || DEFAULT_SKIN));
+
   syncTray(); renderParty(); renderLog();
 })();
 </script>
 
 <script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
 </script>
 <script type="module">
 import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 // --- Setup: renderer (draws), scene (holds objects), camera (viewpoint), lights
 const canvas = document.getElementById("dieCanvas");
@@ -495,7 +916,10 @@ camera.up.set(0, 0, 1);                         // in our world, +z is "up", off
 camera.position.set(0, -4, 7);                  // above the table and toward you...
 camera.lookAt(0, 0, 0);                         // ...looking down at its center at about 60°
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+// A soft, blurry "room" for shiny dice to reflect, so gems glint and metal looks like metal
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.5;
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
 keyLight.position.set(3, -4, 8);                // light from above, slightly right and in front
 scene.add(keyLight);
@@ -563,10 +987,60 @@ const SHAPES = {
   100: () => new THREE.SphereGeometry(1.2, 48, 32)  // round "ball" d100
 };
 
-// --- Dark body with brass edges, to match the page
+// --- Every die face projects the skin's pattern straight on, so the pattern isn't stretched.
+//     Each face gets its own slice of the pattern, so the faces don't all look the same.
+function faceUVs(geo) {
+  const g = geo.index ? geo.toNonIndexed() : geo;
+  if (g !== geo) geo.dispose();
+  const p = g.attributes.position, uv = new Float32Array(p.count * 2);
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), t = new THREE.Vector3(), s = new THREE.Vector3();
+  for (let i = 0; i < p.count; i += 3) {
+    a.fromBufferAttribute(p, i); b.fromBufferAttribute(p, i + 1); c.fromBufferAttribute(p, i + 2);
+    const n = b.clone().sub(a).cross(c.clone().sub(a)).normalize();
+    t.set(0, 0, 1); if (Math.abs(n.z) > 0.9) t.set(1, 0, 0);
+    t.cross(n).normalize(); s.crossVectors(n, t);  // two directions lying flat on this face
+    const off = (n.x * 3.7 + n.y * 5.3 + n.z * 7.1) % 1;  // where in the pattern this face starts
+    for (const [k, v] of [[0, a], [1, b], [2, c]]) {
+      uv[(i + k) * 2] = v.dot(t) * 0.3 + off;
+      uv[(i + k) * 2 + 1] = v.dot(s) * 0.3 + off * 1.7;
+    }
+  }
+  g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  return g;
+}
+
+// --- The dice's look comes from the chosen skin (see the skin menu)
 const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2440, roughness: 0.5, flatShading: true });
-const ballMat = bodyMat.clone(); ballMat.flatShading = false;      // same color, smooth for the ball
+const ballMat = bodyMat.clone(); ballMat.flatShading = false;      // same look, smooth for the ball
 const edgeMat = new THREE.LineBasicMaterial({ color: 0xd4a64a });
+let ink = "#d4a64a";                            // the color of the numbers
+const FINISH = {
+  matte: { roughness: 0.85, metalness: 0 },
+  satin: { roughness: 0.5, metalness: 0 },
+  gloss: { roughness: 0.15, metalness: 0 },
+  metal: { roughness: 0.32, metalness: 0.9 }
+};
+let skinTex = null, ballTex = null;
+function applySkin({ skin, canvas }) {
+  skinTex?.dispose(); ballTex?.dispose();
+  skinTex = new THREE.CanvasTexture(canvas);
+  skinTex.colorSpace = THREE.SRGBColorSpace;
+  skinTex.wrapS = skinTex.wrapT = THREE.RepeatWrapping;
+  skinTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  ballTex = skinTex.clone(); ballTex.repeat.set(3, 1.5);   // the ball wraps the pattern around itself; repeat so it isn't stretched
+  for (const [m, tex] of [[bodyMat, skinTex], [ballMat, ballTex]]) {
+    m.map = tex; m.color.set(0xffffff);
+    Object.assign(m, FINISH[skin.finish] || FINISH.satin);
+    m.needsUpdate = true;
+  }
+  edgeMat.color.set(skin.edge);
+  ink = skin.ink;                               // repaint every number in the new color
+  const old = [...labelCache.values()];
+  labelCache.clear();
+  scene.traverse(o => { if (o.userData.label) o.material = labelMaterial(o.userData.label.n, o.userData.label.underline); });
+  old.forEach(m => { m.map.dispose(); m.dispose(); });
+  renderer.render(scene, camera);
+}
 
 // --- Number stickers: draw a number onto a small transparent image (made once per number, then reused)
 const labelCache = new Map();
@@ -576,11 +1050,14 @@ function labelMaterial(n, underline) {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "#d4a64a";                    // brass, like the edges
+  ctx.fillStyle = ink;                          // the skin's number color
   const digits = String(n).length;
   ctx.font = `bold ${digits > 2 ? 54 : digits > 1 ? 70 : 84}px Georgia, serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  ctx.lineWidth = 8; ctx.lineJoin = "round";
+  ctx.strokeStyle = window.tavernOutline ? window.tavernOutline(ink) : "rgba(0,0,0,.5)";
+  ctx.strokeText(n, 64, 66);                    // outline first, so the number reads on busy skins
   ctx.fillText(n, 64, 66);
   if (underline && (n === 6 || n === 9)) ctx.fillRect(40, 106, 48, 7);  // so 6 and 9 can't be mixed up
   const tex = new THREE.CanvasTexture(c);
@@ -596,6 +1073,7 @@ const plane = new THREE.PlaneGeometry(1, 1);    // one square shared by every st
 const basis = new THREE.Matrix4(), right = new THREE.Vector3();
 function addSticker(group, value, at, normal, up, size, underline) {
   const s = new THREE.Mesh(plane, labelMaterial(value, underline));
+  s.userData.label = { n: value, underline };   // so a new skin can repaint it
   right.crossVectors(up, normal);
   s.quaternion.setFromRotationMatrix(basis.makeBasis(right, up, normal));  // aim the square
   s.position.copy(at).addScaledVector(normal, 0.01);  // a hair above the face
@@ -653,19 +1131,19 @@ function cornersOf(faces) {
 }
 
 // --- Put all the numbers on one die
-function addNumbers(group, sides) {
-  const underline = sides >= 10;                // 6 and 9 look alike upside down on the bigger dice
-  if (kind === "faces") for (const f of faces) addSticker(group, f.value, f.center, f.normal, f.up, f.size * 0.85, underline);
-  if (kind === "d4") for (const f of faces) for (const v of f.corners) {   // each face shows each corner's number, near that corner
+function addNumbers(group, kit) {
+  const underline = kit.sides >= 10;            // 6 and 9 look alike upside down on the bigger dice
+  if (kit.kind === "faces") for (const f of kit.faces) addSticker(group, f.value, f.center, f.normal, f.up, f.size * 0.85, underline);
+  if (kit.kind === "d4") for (const f of kit.faces) for (const v of f.corners) {   // each face shows each corner's number, near that corner
     const toCorner = v.clone().sub(f.center);
-    const value = d4Corners.find(k => k.at.distanceTo(v) < 1e-4).value;
+    const value = kit.d4Corners.find(k => k.at.distanceTo(v) < 1e-4).value;
     addSticker(group, value, f.center.clone().addScaledVector(toCorner, 0.5), f.normal, toCorner.clone().normalize(), f.size * 0.5, false);
   }
 }
 
 // --- Turn a die the smallest amount that puts its lowest face flat on the table
 const DOWN = new THREE.Vector3(0, 0, -1);
-function landFlat(q) {
+function landFlat(q, normals) {
   if (!normals.length) return q.clone();        // the ball has no flat faces
   let lowest = null;
   for (const n of normals) {
@@ -675,54 +1153,55 @@ function landFlat(q) {
   return new THREE.Quaternion().setFromUnitVectors(lowest, DOWN).multiply(q);
 }
 
+// --- Everything about one type of die, worked out once and shared by every die of that type
+const kits = new Map();
+function kitFor(sides) {
+  if (kits.has(sides)) return kits.get(sides);
+  const geo = sides === 100 ? SHAPES[sides]() : faceUVs(SHAPES[sides]());  // the ball keeps its own round mapping
+  geo.computeBoundingSphere();                  // the smallest ball that fits around the die
+  const kind = sides === 100 ? "ball" : sides === 4 ? "d4" : "faces";   // how it shows a result
+  const faces = kind === "ball" ? [] : findFaces(geo, sides === 6);
+  if (kind === "faces") numberFaces(faces, sides);
+  const kit = {
+    sides, kind, geo, faces,
+    edges: new THREE.EdgesGeometry(geo, 10),
+    normals: faces.map(f => f.normal),          // landFlat() works from these
+    d4Corners: kind === "d4" ? cornersOf(faces) : [],
+    r0: geo.boundingSphere.radius               // its size before shrinking
+  };
+  kits.set(sides, kit);
+  return kit;
+}
+
 let dice = [];                                  // one entry per die on the table
-let shared = null;                              // the shape and outline, shared by every die
-let normals = [];                               // the die's face directions (empty for the ball)
-let faces = [];                                 // the die's faces, with their numbers
-let d4Corners = [];                             // a d4's corners, with their numbers
-let kind = "faces";                             // how this die shows a result: "faces", "d4" or "ball"
-let baseRadius = 1;                             // the die's size before shrinking (to place the ball's number)
-let reach = 1;                                  // how far a die reaches from its center (for walls)
-let radius = 1;                                 // a die's size when bumping into other dice
-let shown = "";                                 // which dice are on the table, e.g. "3d6"
+let shown = "";                                 // which dice are on the table, e.g. "6,6,8"
 const DIE_SIZE = 0.6;                           // the biggest a die can be (1 = original size)
 
-function setDice(sides, count) {
-  const key = `${count}d${sides}`;
+function setDice(list) {
+  const key = list.join(",");
   if (key === shown) return;                    // e.g. changing the modifier doesn't need new dice
   shown = key;
   cancelAnimationFrame(rollFrame);              // stop any roll in progress
-  dice.forEach(d => scene.remove(d.group));     // clear the old dice and free their memory
-  if (shared) { shared.geo.dispose(); shared.edges.dispose(); }
+  dice.forEach(d => scene.remove(d.group));     // clear the old dice (their shapes are kept for next time)
 
-  const geo = SHAPES[sides]();
-  geo.computeBoundingSphere();                  // the smallest ball that fits around the die
-  shared = { geo, edges: new THREE.EdgesGeometry(geo, 10) };
+  // Shrink the dice when there are lots of them, so together they cover about 20% of the table
+  const w = walls(), area = (w.x * 2) * (w.yMax - w.yMin);   // the table's width × depth
+  const kitList = list.map(kitFor);
+  const footprint = kitList.reduce((sum, k) => sum + Math.PI * k.r0 * k.r0, 0);
+  const scale = footprint ? Math.min(DIE_SIZE, Math.sqrt((area * 0.2) / footprint)) : DIE_SIZE;
 
-  // Shrink the dice when there are lots of them, so they cover about 20% of the table
-  const w = walls(), r0 = geo.boundingSphere.radius;
-  const area = (w.x * 2) * (w.yMax - w.yMin);   // the table's width × depth
-  const scale = Math.min(DIE_SIZE, Math.sqrt((area * 0.2) / (count * Math.PI * r0 * r0)));
-  reach = r0 * scale;
-  radius = reach * 0.85;                        // a little less, so dice can get close like real ones
-
-  kind = sides === 100 ? "ball" : sides === 4 ? "d4" : "faces";
-  baseRadius = r0;
-  faces = kind === "ball" ? [] : findFaces(geo, sides === 6);
-  normals = faces.map(f => f.normal);           // landFlat() still works from these
-  if (kind === "faces") numberFaces(faces, sides);
-  if (kind === "d4") d4Corners = cornersOf(faces);
-
-  dice = Array.from({ length: count }, () => {
+  dice = kitList.map(kit => {
     const group = new THREE.Group();
-    group.add(new THREE.Mesh(geo, sides === 100 ? ballMat : bodyMat));  // the solid body
-    group.add(new THREE.LineSegments(shared.edges, edgeMat));           // the outlines
-    addNumbers(group, sides);                   // the number stickers
+    group.add(new THREE.Mesh(kit.geo, kit.kind === "ball" ? ballMat : bodyMat));  // the solid body
+    group.add(new THREE.LineSegments(kit.edges, edgeMat));                       // the outlines
+    addNumbers(group, kit);                     // the number stickers
     group.scale.setScalar(scale);
     const randomTurn = new THREE.Euler(Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3);
-    group.quaternion.copy(landFlat(new THREE.Quaternion().setFromEuler(randomTurn)));  // lying flat, random face up
+    group.quaternion.copy(landFlat(new THREE.Quaternion().setFromEuler(randomTurn), kit.normals));  // lying flat, random face up
     scene.add(group);
-    return { group, vx: 0, vy: 0, vz: 0 };      // speed sideways, front/back, and up/down
+    const reach = kit.r0 * scale;               // how far it reaches from its center (for walls)
+    return { group, kit, reach, radius: reach * 0.85,   // a little less for bumping, so dice can get close like real ones
+             vx: 0, vy: 0, vz: 0 };             // speed sideways, front/back, and up/down
   });
   lineUp();
   renderer.render(scene, camera);
@@ -730,7 +1209,8 @@ function setDice(sides, count) {
 
 // --- Line the dice up in neat, centered rows (when they first appear)
 function lineUp() {
-  const w = walls(), gap = reach * 2.2;
+  if (!dice.length) return;
+  const w = walls(), gap = Math.max(...dice.map(d => d.reach)) * 2.2;
   const perRow = Math.max(1, Math.floor((w.x * 2) / gap));
   const rows = Math.ceil(dice.length / perRow);
   const midY = (w.yMin + w.yMax) / 2;           // the middle of the table, front to back
@@ -749,7 +1229,7 @@ const TUMBLE = 1.0;                             // 1 = rolls without sliding; lo
 const turn = new THREE.Quaternion(), rollAxis = new THREE.Vector3();
 
 // --- One small physics step: move, fall and bounce, roll, hit walls, then hit each other
-function step(dt, friction, edge, tumbling) {
+function step(dt, friction, w, tumbling) {
   const drag = Math.exp(-friction * dt);        // friction: lose a little speed every step
   for (const d of dice) {
     const p = d.group.position;
@@ -767,10 +1247,12 @@ function step(dt, friction, edge, tumbling) {
     const speed = Math.hypot(d.vx, d.vy);
     if (tumbling && speed > 0.01) {             // roll over in the direction it's moving
       rollAxis.set(-d.vy, d.vx, 0).divideScalar(speed);  // the axis is sideways to its path
-      turn.setFromAxisAngle(rollAxis, speed * dt / reach * TUMBLE);
+      turn.setFromAxisAngle(rollAxis, speed * dt / d.reach * TUMBLE);
       d.group.quaternion.premultiply(turn);
     }
 
+    const m = d.reach + 0.1;                    // keep the whole die inside the walls
+    const edge = { minX: -w.x + m, maxX: w.x - m, minY: w.yMin + m, maxY: w.yMax - m };
     if (p.x < edge.minX) { p.x = edge.minX; d.vx =  Math.abs(d.vx) * BOUNCE; }   // left wall
     if (p.x > edge.maxX) { p.x = edge.maxX; d.vx = -Math.abs(d.vx) * BOUNCE; }   // right wall
     if (p.y < edge.minY) { p.y = edge.minY; d.vy =  Math.abs(d.vy) * BOUNCE; }   // near edge
@@ -782,9 +1264,10 @@ function step(dt, friction, edge, tumbling) {
       const pa = a.group.position, pb = b.group.position;
       const dx = pb.x - pa.x, dy = pb.y - pa.y;
       const dist = Math.hypot(dx, dy);
-      if (dist >= radius * 2) continue;         // not touching, nothing to do
+      const touch = a.radius + b.radius;        // how close their centers get when touching
+      if (dist >= touch) continue;              // not touching, nothing to do
       const nx = dist ? dx / dist : 1, ny = dist ? dy / dist : 0;  // direction from a to b
-      const push = (radius * 2 - dist) / 2;     // move each half the overlap, so they just touch
+      const push = (touch - dist) / 2;          // move each half the overlap, so they just touch
       pa.x -= nx * push; pa.y -= ny * push;
       pb.x += nx * push; pb.y += ny * push;
       const closing = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;  // how fast they're heading into each other
@@ -802,8 +1285,9 @@ const UP = new THREE.Vector3(0, 0, 1);
 function topFix(d, end, value) {
   const fix = new THREE.Quaternion();
   if (value === undefined) return fix;
+  const { kind } = d.kit;
   if (kind === "ball") { placeBallNumber(d, end, value); return fix; }
-  const list = kind === "d4" ? d4Corners : faces;     // a d4 is read at its top corner, the rest at their top face
+  const list = kind === "d4" ? d.kit.d4Corners : d.kit.faces;     // a d4 is read at its top corner, the rest at their top face
   const dirOf = it => it.dir || it.normal;
   const height = it => dirOf(it).clone().applyQuaternion(end.q).z;
   const top = list.reduce((best, it) => height(it) > height(best) ? it : best);  // what ended up on top
@@ -824,7 +1308,8 @@ function placeBallNumber(d, end, value) {
   const screenUp = UP.clone().projectOnPlane(view).normalize();  // "up" as you see it
   const inside = end.q.clone().invert();                         // turn those directions into the ball's own
   const n = view.applyQuaternion(inside), up = screenUp.applyQuaternion(inside);
-  d.sticker = addSticker(d.group, value, n.clone().multiplyScalar(baseRadius), n, up, baseRadius * 0.9, false);
+  const r = d.kit.r0;
+  d.sticker = addSticker(d.group, value, n.clone().multiplyScalar(r), n, up, r * 0.9, false);
 }
 
 // --- Rolling: work out the whole roll first, fix the numbers, then play it back
@@ -832,8 +1317,7 @@ const STEP = 1 / 240;                           // the physics runs in steps of 
 let rollFrame = null;
 function roll(duration, values) {
   cancelAnimationFrame(rollFrame);              // stop any roll already in progress
-  const w = walls(), m = reach + 0.1;
-  const edge = { minX: -w.x + m, maxX: w.x - m, minY: w.yMin + m, maxY: w.yMax - m };
+  const w = walls();
   const secs = duration / 1000;
   dice.forEach(d => {
     const angle = Math.random() * Math.PI * 2;  // a random direction...
@@ -853,12 +1337,12 @@ function roll(duration, values) {
     const t = i / steps;                        // goes from 0 to 1 over the roll
     const friction = (0.8 + 6 * t * t) * (2 / secs);  // light at first, heavier toward the end
     const tumbling = t < 0.8;                   // roll freely for the first 80%...
-    step(STEP, friction, edge, tumbling);
+    step(STEP, friction, w, tumbling);
     if (!tumbling) {                            // ...then spend the last 20% tipping onto a face
       const k = (t - 0.8) / 0.2;
       const ease = k * k * (3 - 2 * k);         // starts and ends gently
       dice.forEach(d => {
-        if (!d.settle) d.settle = { from: d.group.quaternion.clone(), to: landFlat(d.group.quaternion) };
+        if (!d.settle) d.settle = { from: d.group.quaternion.clone(), to: landFlat(d.group.quaternion, d.kit.normals) };
         d.group.quaternion.slerpQuaternions(d.settle.from, d.settle.to, ease);
       });
     }
@@ -885,8 +1369,10 @@ function roll(duration, values) {
 }
 
 document.addEventListener("die:roll", e => roll(e.detail.duration, e.detail.values));
-document.addEventListener("tray:change", e => setDice(e.detail.sides, e.detail.count));
-setDice(20, 1);                                 // the tray starts on one d20
+document.addEventListener("tray:change", e => setDice(e.detail.dice));
+document.addEventListener("skin:change", e => applySkin(e.detail));
+if (window.tavernSkin) applySkin(window.tavernSkin);   // the skin and dice chosen before this loaded
+setDice(window.tavernDice || [20]);
 </script>
 </body>
 </html>

@@ -38,10 +38,14 @@ Click **Roll** and watch them go. The dice are tossed onto the table, bounce, tu
 | d4 | The number at the corner pointing up, just like a real d4 |
 | d100 | A round ball that rolls to a stop with the result facing you |
 
-Roll up to **20 dice at once**. They shrink to fit and bump into each other on the way.
+Roll up to **20 dice at once**, and mix any types you like: 2d6 + 1d8 for a sneak attack, 8d6 for a Fireball. They shrink to fit and bump into each other on the way.
+
+### 🎨 Dice skins
+Click **Dice skin** in the corner of the dice table to pick from 40 skins: classics, gemstones, metals, camo (woodland, desert, arctic, digital and more), marble, wood and cosmic. Or use **Make your own** to pick colors, a pattern and a finish. Your choice is saved.
 
 ### 🧮 The dice tray
-- Pick a die, how many, and a modifier from **−10 to +30**.
+- Tap a die to add it to the roll. Tap it again for more. Tap a die in the *Rolling* row to take one away, or **Clear** to start over.
+- Add a modifier from **−10 to +30**.
 - **Advantage and disadvantage** roll two d20s; the one you drop is crossed out.
 - **Natural 20s** glow gold. **Natural 1s** glow red. 😬
 - Say who's rolling and what they're trying (*"Pick the lock on the crypt door"*), and it goes in the log.
