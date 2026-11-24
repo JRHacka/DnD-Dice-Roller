@@ -194,7 +194,6 @@ function flameShape(x, y, s = 1) {
     `<path d="M0 -26 C3 -18 9 -14 8 -6 C7 1 3 3 0 3 C-4 3 -8 0 -8 -6 C-8 -12 -3 -14 -2 -20 C-1 -16 0 -15 1 -14 C0 -18 0 -22 0 -26Z" fill="#ff7a1a"/>` +
     `<path d="M0 -14 C2 -9 5 -6 4 -2 C4 1 2 2 0 2 C-2 2 -4 1 -4 -2 C-4 -6 -1 -9 0 -14Z" fill="#ffd25a"/></g>`;
 }
-const wallTorch = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})">${rect(-3, -6, 6, 26, "#4a3020")}${trap(0, 16, 14, 22, 6, "#2a2a30")}<g class="sf">${flameShape(0, -6, 1)}</g></g>`;
 
 /* ---------- Props ---------- */
 const PROP = {

@@ -1,0 +1,70 @@
+/* Tavern Table: the scene kit (js/scenekit.js). Depth layers, lights, particles and overlays for kit-built scenes.
+   Everything that moves here only animates transform and opacity, which the GPU handles without redrawing. */
+
+/* The frame: the art's exact proportions (1600 × 940), covering the window plus a little extra on each side
+   so layers never show an edge when they slide. Art units inside it: 1 unit = --u. */
+.kit-frame { position: absolute; left: 50%; top: -32px; transform: translateX(-50%);
+  width: max(calc(100vw + 64px), calc((100vh + 64px) * 1600 / 940)); aspect-ratio: 1600 / 940;
+  container-type: inline-size; }
+.kit-frame * { --u: calc(100cqw / 1600); }
+
+/* Depth layers slide with the mouse: --mx / --my (-1 to 1) are set by kitMount(), --d is the layer's depth */
+.kit-layer { position: absolute; inset: 0; pointer-events: none; will-change: transform;
+  transform: translate3d(calc(var(--mx, 0) * var(--d) * -20px), calc(var(--my, 0) * var(--d) * -8px), 0);
+  transition: transform .4s ease-out; }
+.kit-layer > svg { width: 100%; height: 100%; display: block; }
+
+/* Lights: soft gradients that brighten whatever is behind them */
+.kit-lights { mix-blend-mode: screen; }
+.kit-light { position: absolute; border-radius: 50%; will-change: opacity, transform; animation: kit-torch 1.2s ease-in-out infinite alternate; }
+.kit-light[style*="clip-path"] { border-radius: 0; }
+.kit-flicker-torch { animation-name: kit-torch; }
+.kit-flicker-fire { animation-name: kit-fire; }
+.kit-flicker-steady { animation-name: kit-steady; }
+.kit-flicker-pulse { animation-name: kit-pulse; animation-timing-function: ease-in-out; }
+.kit-flicker-sweep { animation-name: kit-sweep; animation-timing-function: linear; animation-direction: normal; opacity: 0; }
+@keyframes kit-torch { 0% { opacity: .82; transform: scale(.98); } 35% { opacity: 1; transform: scale(1.02); } 60% { opacity: .88; transform: scale(.99); } 100% { opacity: .96; transform: scale(1.03); } }
+@keyframes kit-fire { 0% { opacity: .75; transform: scale(.96); } 25% { opacity: 1; transform: scale(1.04); } 50% { opacity: .82; transform: scale(.98); } 75% { opacity: .95; transform: scale(1.05); } 100% { opacity: .85; transform: scale(1); } }
+@keyframes kit-steady { from { opacity: .92; } to { opacity: 1; } }
+@keyframes kit-pulse { from { opacity: .6; transform: scale(.92); } to { opacity: 1; transform: scale(1.08); } }
+@keyframes kit-sweep { 0% { opacity: 0; transform: translate(0, 0); } 15% { opacity: 1; } 80% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(var(--sx) * var(--u)), calc(var(--sy) * var(--u))); } }
+
+/* A whole layer drifting slowly back and forth (clouds): --dist art units */
+.kit-drift { position: absolute; inset: 0; will-change: transform; animation: kit-drift 60s ease-in-out infinite alternate; }
+.kit-drift > svg { width: 100%; height: 100%; display: block; }
+@keyframes kit-drift { from { transform: translateX(0); } to { transform: translateX(calc(var(--dist) * var(--u))); } }
+
+/* Moving parts inside a layer's SVG (lengths here are art units).
+   kit-sway: swings gently from its top edge (banners). kit-fly: travels --fx, --fy and fades in and out (fireballs). */
+.kit-sway { transform-box: fill-box; transform-origin: 50% 0; animation: kit-sway 4s ease-in-out infinite alternate; }
+@keyframes kit-sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+.kit-fly { animation: kit-fly 3s linear infinite; opacity: 0; }
+@keyframes kit-fly { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translate(var(--fx), var(--fy)); opacity: 0; } }
+
+/* Particles: --r size, --dx/--dy how far one trip goes, all in art units */
+.kit-p { position: absolute; width: calc(var(--r) * var(--u)); height: calc(var(--r) * var(--u)); border-radius: 50%; opacity: 0;
+  will-change: transform, opacity; animation: 10s linear infinite; }
+.kit-p-dust { animation-name: kit-dust; animation-timing-function: ease-in-out; }
+.kit-p-embers { animation-name: kit-embers; animation-timing-function: ease-out; }
+.kit-p-snow { animation-name: kit-snow; }
+.kit-p-fireflies { animation-name: kit-fireflies; animation-timing-function: ease-in-out; }
+.kit-p-twinkle { animation-name: kit-twinkle; animation-timing-function: ease-in-out; animation-direction: alternate; opacity: var(--o); }
+@keyframes kit-dust { 0%, 100% { transform: translate(0, 0); opacity: 0; } 25%, 75% { opacity: var(--o); } 50% { transform: translate(calc(var(--dx) * var(--u)), calc(var(--dy) * var(--u))); } }
+@keyframes kit-embers { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; } 50% { transform: translate(calc(var(--dx) * var(--u)), calc(var(--dy) * .5 * var(--u))); } 100% { transform: translate(calc(var(--dx) * -.4 * var(--u)), calc(var(--dy) * var(--u))); opacity: 0; } }
+@keyframes kit-snow { 0% { transform: translate(0, 0); opacity: var(--o); } 50% { transform: translate(calc(var(--dx) * var(--u)), calc(var(--dy) * .5 * var(--u))); } 100% { transform: translate(0, calc(var(--dy) * var(--u))); opacity: var(--o); } }
+@keyframes kit-twinkle { from { opacity: calc(var(--o) * .25); } to { opacity: var(--o); } }
+@keyframes kit-fireflies { 0%, 100% { transform: translate(0, 0); opacity: .15; } 25% { opacity: 1; } 50% { transform: translate(calc(var(--dx) * var(--u)), calc(var(--dy) * var(--u))); opacity: .3; } 75% { transform: translate(calc(var(--dx) * -.5 * var(--u)), calc(var(--dy) * .6 * var(--u))); opacity: 1; } }
+
+/* Overlays over the whole window: film grain, a color grade, and a vignette */
+.kit-grain, .kit-grade, .kit-vignette { position: absolute; inset: 0; pointer-events: none; }
+.kit-grain { background-size: 256px 256px; mix-blend-mode: overlay; }
+.kit-vignette { background: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0, 0, 0, var(--v)) 100%); }
+
+/* Less motion: no parallax, flicker, drifting, swaying or flying (fireballs freeze halfway), and no moving particles (stars stay, still) */
+@media (prefers-reduced-motion: reduce) {
+  .kit-layer { transform: none; transition: none; }
+  .kit-light, .kit-drift, .kit-sway { animation: none; }
+  .kit-flicker-sweep { display: none; }
+  .kit-fly { animation: none; opacity: 1; transform: translate(calc(var(--fx) * .5), calc(var(--fy) * .5)); }   /* frozen halfway */
+  .kit-p:not(.kit-p-twinkle) { display: none; }
+}

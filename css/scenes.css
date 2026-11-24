@@ -7,6 +7,7 @@
 .scene-bg svg { width: 100%; height: 100%; display: block; }
 .scene-bg::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(rgba(8, 6, 4, .7), rgba(8, 6, 4, .15) 130px, transparent 200px); }   /* so the title reads */
+[data-scene="town"] .scene-bg::after { background: linear-gradient(rgba(8, 6, 4, .38), rgba(8, 6, 4, .05) 110px, transparent 170px); }   /* daylight: a lighter touch */
 header, main { position: relative; z-index: 1; }
 
 /* Start the panels just below the characters' feet, so the action is in view when the page opens.

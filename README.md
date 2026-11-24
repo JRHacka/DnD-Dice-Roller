@@ -4,13 +4,13 @@
 
 **Pull up a chair, grab your dice, and let's roll.**
 
-A candlelit dice tray and party tracker for tabletop RPG nights, built for 5th-edition style games.
+A torchlit dice tray and party tracker for tabletop RPG nights, built for 5th-edition style games.
 
 ![Open index.html](https://img.shields.io/badge/just%20open-index.html-d4a64a?style=flat-square)
 ![No build step](https://img.shields.io/badge/build%20step-none-5fb37f?style=flat-square)
-![3D dice](https://img.shields.io/badge/3D%20dice-Three.js-1c2030?style=flat-square)
+![3D dice](https://img.shields.io/badge/3D%20dice-Three.js-2a1d13?style=flat-square)
 
-![Tavern Table: eight 3D d6s landed on the dice tray after a Fireball roll, next to the party and initiative tracker](docs/screenshot.png)
+![Tavern Table in the Dungeon scene: the party battles skeletons and draugr by torchlight above the dice tray, where eight glowing d6s have landed after Maelis casts Fireball](docs/screenshot.png)
 
 </div>
 
@@ -53,6 +53,14 @@ Click **Scene** at the top to set the mood. The scene fills the whole page behin
 | 🏘️ Town Square | Market day, with shops and townsfolk |
 | 🔥 Wizard's Tower | A dark wizard rains fireballs on the party |
 | 👑 Castle | The king knights the heroes |
+
+Every scene has real depth and atmosphere:
+- **Layers** that shift slightly as you move the mouse, with distant things fading into haze
+- **Real light**: torches, fires, lamps, windows and magic flicker and light up the stone, wood and ground around them
+- **Life**: drifting dust and embers, twinkling stars, clouds rolling by, banners swaying, and fireballs flying from the wizard's tower
+- **Soft shadows** under everyone, and a color mood for each place
+
+If your computer is set to *reduce motion*, the scenes hold still.
 
 Your choice is saved.
 
@@ -103,7 +111,8 @@ So the dice look completely natural, and they always agree with the result. No l
 
 ## 🗺️ The road ahead
 
-- 🎨 **Dice skins**: colors, camo and marble
+- 🧙 **Better-looking characters**: more detailed heroes, monsters and townsfolk to match the new scenes
+- 🔄 **Scenes that follow the story**, switching on their own as the adventure moves from tavern to dungeon
 - ⚡ **Saved roll presets**, like *Longsword 1d8+3* or *Fireball 8d6*
 - 🧾 **Typed formulas**, like `2d6+1d4+3`
 - 💀 **Death saving throws** for characters at 0 HP
@@ -118,11 +127,13 @@ index.html             The page itself: markup, plus the list of styles and scri
 css/style.css          Layout and components (tray, party cards, log, skin menu)
 css/tavern.css         The theme: colors and the wooden panels
 css/scenes.css         The full-page scene and the scene menu
+css/scenekit.css       Scene kit: depth layers, lights, particles, overlays
 js/noise.js            Seeded random numbers and tiling noise (for skins and scenes)
 js/app.js              Saved state, party & initiative, roll log
 js/tray.js             Dice pool, modifier, advantage, the Roll button
 js/skins.js            The 40 dice skins, pattern painter and skin menu
 js/figures.js          The party, monsters, townsfolk and props, drawn as low-poly SVG
+js/scenekit.js         Scene kit: tools for scenes with depth, light and atmosphere
 js/scenes.js           The six scenes and the scene menu
 js/dice3d.js           The 3D dice: shapes, numbers, physics, rolling, glow
 docs/screenshot.png    The picture at the top of this page
