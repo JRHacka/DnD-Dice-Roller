@@ -125,6 +125,13 @@ So the dice look completely natural, and they always agree with the result. No l
 - 💀 **Death saving throws** for characters at 0 HP
 - 📋 **Fuller character sheets** with ability scores and saving throws
 
+**Play together online** (planned)
+- 🌍 **A hosted site**: play at a web address in any browser, with nothing to download
+- 👤 **Accounts**: sign in to keep your characters, dice skins and roll history on every device
+- 📊 **Stats**: nat 20s and nat 1s, your luckiest and unluckiest rolls, averages per character
+- 🧑‍🤝‍🧑 **Shared parties**: invite friends with a link, see everyone's rolls live, and let the DM run turn order
+- 🔒 **Fair rolls in multiplayer**: rolled by the server, so nobody can fudge a nat 20
+
 ---
 
 ## 📁 What's in the box
