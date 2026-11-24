@@ -6,6 +6,8 @@
 
 A torchlit dice tray and party tracker for tabletop RPG nights, built for 5th-edition style games.
 
+▶️ **Play it online: [jrhacka.github.io/DnD-Dice-Roller](https://jrhacka.github.io/DnD-Dice-Roller/)**
+
 ![Open index.html](https://img.shields.io/badge/just%20open-index.html-d4a64a?style=flat-square)
 ![No build step](https://img.shields.io/badge/build%20step-none-5fb37f?style=flat-square)
 ![3D dice](https://img.shields.io/badge/3D%20dice-Three.js-2a1d13?style=flat-square)
@@ -144,6 +146,7 @@ css/scenes.css         The full-page scene and the scene menu
 css/scenekit.css       Scene kit: depth layers, lights, particles, overlays
 js/noise.js            Seeded random numbers and tiling noise (for skins and scenes)
 js/storage.js          Saving and loading (and upgrading old saves)
+js/roll.js             The dice rules: works out a roll, nothing else
 js/app.js              The party & initiative, roll log
 js/tray.js             Dice pool, modifier, advantage, the Roll button
 js/skins.js            The 40 dice skins, pattern painter and skin menu

@@ -13,7 +13,9 @@ const ICONS = {
 };
 const CONDITIONS = ["Blinded","Charmed","Concentrating","Frightened","Grappled","Incapacitated","Invisible","Paralyzed","Poisoned","Prone","Restrained","Stunned"];
 
-const uid = () => Math.random().toString(36).slice(2, 9);
+// A unique id for characters and rolls. randomUUID gives ids that won't clash even across players and devices
+// (it needs a secure page: https, localhost or a file; the fallback covers anything else).
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
 const d = n => 1 + Math.floor(Math.random() * n);
 const fmtMod = m => (m >= 0 ? "+" : "−") + Math.abs(m);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

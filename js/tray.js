@@ -64,30 +64,6 @@ function syncTray() {
   document.dispatchEvent(new CustomEvent("tray:change", { detail: { dice: shown } }));
 }
 
-function doRoll() {
-  const { mod, mode } = tray;
-  let values, kept, natural = null, parts, keep;   // keep: which dice count (only set for advantage/disadvantage)
-  if (advAllowed() && mode !== "norm") {
-    const a = d(20), b = d(20);
-    kept = mode === "adv" ? Math.max(a, b) : Math.min(a, b);
-    natural = kept;
-    const keepFirst = (mode === "adv" ? a >= b : a <= b);
-    parts = `[<span class="${keepFirst ? "kept" : "dropped"}">${a}</span>, <span class="${keepFirst ? "dropped" : "kept"}">${b}</span>]`;
-    values = [a, b];
-    keep = [keepFirst, !keepFirst];
-  } else {
-    const groups = poolTypes().map(s => Array.from({ length: tray.pool[s] }, () => d(s)));  // one list of rolls per die type
-    values = groups.flat();                       // same order as the dice on the table
-    kept = values.reduce((sum, x) => sum + x, 0);
-    if (advAllowed()) natural = kept;
-    parts = groups.map(g => `[${g.join(", ")}]`).join(" + ");
-  }
-  const total = kept + mod;
-  const kind = natural === 20 ? "crit" : natural === 1 ? "fumble" : "";
-  const label = `${poolText()}${mod ? " " + fmtMod(mod) : ""}${mode === "adv" ? " adv" : mode === "dis" ? " dis" : ""}`;
-  return { total, natural, kind, label, parts, mod, mode, dice: values, keep };
-}
-
 function rollerName() {
   const id = $("roller").value;
   const p = state.party.find(x => x.id === id);
@@ -96,7 +72,7 @@ function rollerName() {
 
 const ROLL_MS = 2000;                           // how long the die tumbles, in milliseconds
 $("rollBtn").onclick = () => {
-  const r = doRoll();                           // the result is decided right away...
+  const r = rollDice(tray);                     // the result is decided right away (the rules are in js/roll.js)...
   r.who = rollerName(); r.action = $("action").value.trim();  // remember who rolled, at the moment of rolling
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const wait = reduce ? 0 : ROLL_MS;            // no tumble for people who turn animations off
@@ -111,14 +87,19 @@ function showRoll(r) {
   const res = $("result");
   res.className = "result " + r.kind;
   $("total").textContent = r.total;
-  $("formula").innerHTML = `${esc(r.label)} → ${r.parts}${r.mod ? " " + fmtMod(r.mod) : ""}`;
+  const parts = r.keep                            // e.g. [14, 6] + [3], or [<kept>17</kept>, <dropped>9</dropped>] for advantage
+    ? `[${r.dice.map((v, i) => `<span class="${r.keep[i] ? "kept" : "dropped"}">${v}</span>`).join(", ")}]`
+    : r.groups.map(g => `[${g.values.join(", ")}]`).join(" + ");
+  $("formula").innerHTML = `${esc(r.label)} → ${parts}${r.mod ? " " + fmtMod(r.mod) : ""}`;
   const tag = $("tag");
   if (r.kind) { tag.hidden = false; tag.textContent = r.kind === "crit" ? "NATURAL 20" : "NATURAL 1"; } else tag.hidden = true;
 
   const who = r.who;
   const action = r.action;
   const name = who ? who.name : "Someone";
-  state.log.unshift({ id: uid(), t: Date.now(), who: name, action, label: r.label, total: r.total, kind: r.kind });
+  // whoId, natural and dice are for stats later (nat 20s per character, luckiest rolls). Older entries don't have them.
+  state.log.unshift({ id: uid(), t: Date.now(), whoId: who ? who.id : null, who: name, action,
+    label: r.label, total: r.total, kind: r.kind, natural: r.natural, dice: r.dice });
   state.log = state.log.slice(0, 40);
   save(); renderLog();
 }
