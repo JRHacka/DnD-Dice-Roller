@@ -64,6 +64,13 @@ If your computer is set to *reduce motion*, the scenes hold still.
 
 Your choice is saved.
 
+### 🧪 In the works: painted art
+The scenes are getting a painted high-fantasy makeover, and the first one is ready to try: pick **Dungeon (Painted)** from the Scene menu.
+
+![A preview of the painted Dungeon: the party faces a pack of skeletons led by a giant brute, in a torch-lit stone hall](docs/painted-preview.webp)
+
+It sits *next to* the original Dungeon while it's being tested, so the six original scenes stay exactly as they are. The characters' poses are placeholders for now. Final art is on the way, then the other five scenes.
+
 ### 🎨 Dice skins
 Click **Dice skin** in the corner of the dice table to pick from 40 skins: classics, gemstones, metals, camo (woodland, desert, arctic, digital and more), marble, wood and cosmic. Or use **Make your own** to pick colors, a pattern and a finish. Your choice is saved.
 
@@ -111,7 +118,7 @@ So the dice look completely natural, and they always agree with the result. No l
 
 ## 🗺️ The road ahead
 
-- 🧙 **Better-looking characters**: more detailed heroes, monsters and townsfolk to match the new scenes
+- 🎨 **Painted art for every scene**: the painted Dungeon is in testing; final character poses and the other five scenes are next
 - 🔄 **Scenes that follow the story**, switching on their own as the adventure moves from tavern to dungeon
 - ⚡ **Saved roll presets**, like *Longsword 1d8+3* or *Fireball 8d6*
 - 🧾 **Typed formulas**, like `2d6+1d4+3`
@@ -137,6 +144,8 @@ js/scenekit.js         Scene kit: tools for scenes with depth, light and atmosph
 js/scenes.js           The six scenes and the scene menu
 js/dice3d.js           The 3D dice: shapes, numbers, physics, rolling, glow
 docs/screenshot.png    The picture at the top of this page
+assets/                     Painted art for the scenes and characters (web-size WebP)
+docs/painted-preview.webp   The painted Dungeon preview
 README.md              You are here
 ```
 
