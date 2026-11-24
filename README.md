@@ -12,7 +12,7 @@ A torchlit dice tray and party tracker for tabletop RPG nights, built for 5th-ed
 ![No build step](https://img.shields.io/badge/build%20step-none-5fb37f?style=flat-square)
 ![3D dice](https://img.shields.io/badge/3D%20dice-Three.js-2a1d13?style=flat-square)
 
-![Tavern Table in the Dungeon scene: the party battles skeletons and draugr by torchlight above the dice tray, where eight glowing d6s have landed after Maelis casts Fireball](docs/screenshot.png)
+![Tavern Table in the painted Dungeon: four heroes face a pack of skeletons led by a giant brute in a torch-lit stone hall, above the dice tray, where eight glowing d6s have landed after Maelis casts Fireball](docs/screenshot.webp)
 
 </div>
 
@@ -20,12 +20,15 @@ A torchlit dice tray and party tracker for tabletop RPG nights, built for 5th-ed
 
 ## 🚪 Getting started
 
+**Play online:** open **[jrhacka.github.io/DnD-Dice-Roller](https://jrhacka.github.io/DnD-Dice-Roller/)** in any browser. Sign in with your email if you'd like your party saved to your account (optional).
+
+**Or run it from the folder:**
 1. Open `index.html` in any modern browser.
 2. There is no step 2. 🎉
 
-Keep the whole folder together: the page loads its styles and scripts from the `css` and `js` folders next to it.
+Keep the whole folder together: the page loads its styles, scripts and art from the folders next to it.
 
-No install, no build step, no account. The page does need an internet connection, because it loads the 3D library ([Three.js](https://threejs.org)) and its fonts from the web.
+No install, no build step, no account needed. The page does need an internet connection, because it loads the 3D library ([Three.js](https://threejs.org)) and its fonts from the web. Accounts only work on the website, not from a folder on your computer.
 
 > 🛠️ **Tinkering with the code?** The [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension for VS Code reloads the page every time you save.
 
@@ -67,9 +70,7 @@ If your computer is set to *reduce motion*, the scenes hold still.
 Your choice is saved.
 
 ### 🧪 In the works: painted art
-The scenes are getting a painted high-fantasy makeover, and the first one is ready to try: pick **Dungeon (Painted)** from the Scene menu.
-
-![A preview of the painted Dungeon: the party faces a pack of skeletons led by a giant brute, in a torch-lit stone hall](docs/painted-preview.webp)
+The scenes are getting a painted high-fantasy makeover, and the first one is ready to try: pick **Dungeon (Painted)** from the Scene menu. That's the one in the picture at the top.
 
 It sits *next to* the original Dungeon while it's being tested, so the six original scenes stay exactly as they are. The characters' poses are placeholders for now. Final art is on the way, then the other five scenes.
 
@@ -158,9 +159,8 @@ js/scenekit.js         Scene kit: tools for scenes with depth, light and atmosph
 js/scenes.js           The six scenes and the scene menu
 js/dice3d.js           The 3D dice: shapes, numbers, physics, rolling, glow
 supabase/schema.sql    The accounts database: one table and its access rules
-docs/screenshot.png    The picture at the top of this page
-assets/                     Painted art for the scenes and characters (web-size WebP)
-docs/painted-preview.webp   The painted Dungeon preview
+docs/screenshot.webp   The picture at the top of this page
+assets/                Painted art for the scenes and characters (web-size WebP)
 README.md              You are here
 ```
 
