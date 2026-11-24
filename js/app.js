@@ -20,19 +20,19 @@ const d = n => 1 + Math.floor(Math.random() * n);
 const fmtMod = m => (m >= 0 ? "+" : "−") + Math.abs(m);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-// Example party so the table opens ready to play
-const EXAMPLE = [
+// A fresh example game so the table opens ready to play (new each time: after signing out, too)
+const exampleGame = () => ({ version: store.VERSION, combat: null, log: [], party: [
   { id: uid(), name: "Brannoc", cls: "Fighter", lvl: 5, hp: 44, maxhp: 44, ac: 18, init: 1, conds: [], monster: false },
   { id: uid(), name: "Ysolde", cls: "Cleric", lvl: 5, hp: 31, maxhp: 38, ac: 17, init: 0, conds: ["Concentrating"], monster: false },
   { id: uid(), name: "Pip Thistlewick", cls: "Rogue", lvl: 5, hp: 33, maxhp: 33, ac: 15, init: 4, conds: [], monster: false },
   { id: uid(), name: "Maelis", cls: "Wizard", lvl: 5, hp: 12, maxhp: 27, ac: 12, init: 2, conds: [], monster: false },
   { id: uid(), name: "Goblin Boss", cls: "Goblinoid", lvl: 1, hp: 21, maxhp: 21, ac: 17, init: 2, conds: [], monster: true }
-];
+] });
 
 // The saved state, in two parts: `state` is the game data, `settings` is this device's settings.
 // Loading, saving and upgrading old saves all live in js/storage.js.
 let { game: state, settings } = store.load();
-if (!state) state = { version: store.VERSION, party: EXAMPLE, combat: null, log: [] };   // first visit
+if (!state) state = exampleGame();   // first visit
 const save = () => store.save(state, settings);
 
 const $ = id => document.getElementById(id);

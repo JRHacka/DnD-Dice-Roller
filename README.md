@@ -100,7 +100,8 @@ The last 40 rolls: when, who, what they were attempting, and how it went.
 
 Your party, the current fight and the roll log are saved in your browser, so they survive a refresh.
 
-- Your data stays on your device. It's never sent anywhere.
+- Unless you sign in, your data stays on your device and is never sent anywhere.
+- **Signed in** (on the website, with an emailed link: no password), your party, the current fight and the roll log are saved to your account, so they follow you to any device. Your scene and dice skin stay with each device. Signing out clears the account's party off that computer.
 - Opening the file directly and opening it through Live Server count as different sites, so each keeps its own save.
 - Clearing your browser's site data resets the table to the sample party.
 
@@ -127,9 +128,9 @@ So the dice look completely natural, and they always agree with the result. No l
 - 💀 **Death saving throws** for characters at 0 HP
 - 📋 **Fuller character sheets** with ability scores and saving throws
 
-**Play together online** (planned)
-- 🌍 **A hosted site**: play at a web address in any browser, with nothing to download
-- 👤 **Accounts**: sign in to keep your characters, dice skins and roll history on every device
+**Play together online**
+- ✅ **A hosted site**: [play it in any browser](https://jrhacka.github.io/DnD-Dice-Roller/), with nothing to download
+- ✅ **Accounts**: sign in with an emailed link (no password) and your party and roll log follow you to every device
 - 📊 **Stats**: nat 20s and nat 1s, your luckiest and unluckiest rolls, averages per character
 - 🧑‍🤝‍🧑 **Shared parties**: invite friends with a link, see everyone's rolls live, and let the DM run turn order
 - 🔒 **Fair rolls in multiplayer**: rolled by the server, so nobody can fudge a nat 20
@@ -145,7 +146,9 @@ css/tavern.css         The theme: colors and the wooden panels
 css/scenes.css         The full-page scene and the scene menu
 css/scenekit.css       Scene kit: depth layers, lights, particles, overlays
 js/noise.js            Seeded random numbers and tiling noise (for skins and scenes)
-js/storage.js          Saving and loading (and upgrading old saves)
+js/config.js           The address and public key of the accounts service (Supabase)
+js/storage.js          Saving and loading: in the browser, and to your account when signed in
+js/account.js          The Sign in button and box
 js/roll.js             The dice rules: works out a roll, nothing else
 js/app.js              The party & initiative, roll log
 js/tray.js             Dice pool, modifier, advantage, the Roll button
@@ -154,6 +157,7 @@ js/figures.js          The party, monsters, townsfolk and props, drawn as low-po
 js/scenekit.js         Scene kit: tools for scenes with depth, light and atmosphere
 js/scenes.js           The six scenes and the scene menu
 js/dice3d.js           The 3D dice: shapes, numbers, physics, rolling, glow
+supabase/schema.sql    The accounts database: one table and its access rules
 docs/screenshot.png    The picture at the top of this page
 assets/                     Painted art for the scenes and characters (web-size WebP)
 docs/painted-preview.webp   The painted Dungeon preview

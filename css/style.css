@@ -57,6 +57,15 @@ dialog.skins { background: linear-gradient(var(--slate), #22170f); }
 dialog.skins::backdrop { background: rgba(8, 9, 14, .55); }
 .skins-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); }
 .skins-head h2 { color: var(--brass); font-size: 1.1rem; }
+/* The account box: a narrower version of the menu dialogs */
+dialog.account { width: min(440px, calc(100vw - 24px)); }
+.account-body { padding: 16px 18px 18px; }
+.account-body form:not([hidden]), #signedIn:not([hidden]) { display: flex; flex-direction: column; gap: 12px; }
+.account-body p { margin: 0; line-height: 1.45; }
+.account-body .roll-btn { font-size: .95rem; padding: 11px; }
+.account-note { color: var(--dim); font-size: .9rem; }
+.account-msg { margin-top: 12px !important; color: var(--dim); font-size: .9rem; }
+.account-msg:empty { display: none; }
 .skins-body { overflow-y: auto; padding: 6px 18px 12px; scrollbar-color: var(--line) transparent; }
 .skins-body h3, .custom h3 { font-family: var(--display); font-size: .85rem; color: var(--dim); letter-spacing: .1em; margin: 14px 0 8px; text-transform: uppercase; }
 .skingrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
