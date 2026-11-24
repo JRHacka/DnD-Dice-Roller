@@ -6,7 +6,7 @@
 
 A candlelit dice tray and party tracker for tabletop RPG nights, built for 5th-edition style games.
 
-![Single HTML file](https://img.shields.io/badge/single%20file-index.html-d4a64a?style=flat-square)
+![Open index.html](https://img.shields.io/badge/just%20open-index.html-d4a64a?style=flat-square)
 ![No build step](https://img.shields.io/badge/build%20step-none-5fb37f?style=flat-square)
 ![3D dice](https://img.shields.io/badge/3D%20dice-Three.js-1c2030?style=flat-square)
 
@@ -20,6 +20,8 @@ A candlelit dice tray and party tracker for tabletop RPG nights, built for 5th-e
 
 1. Open `index.html` in any modern browser.
 2. There is no step 2. 🎉
+
+Keep the whole folder together: the page loads its styles and scripts from the `css` and `js` folders next to it.
 
 No install, no build step, no account. The page does need an internet connection, because it loads the 3D library ([Three.js](https://threejs.org)) and its fonts from the web.
 
@@ -98,7 +100,15 @@ So the dice look completely natural, and they always agree with the result. No l
 ## 📁 What's in the box
 
 ```
-index.html             The whole app: markup, styles and scripts
+index.html             The page itself: markup, plus the list of styles and scripts to load
+css/style.css          Layout and components (tray, party cards, log, skin menu)
+css/tavern.css         The theme: colors, stone wall, wood panels, torches
+js/noise.js            Seeded random numbers and tiling noise (for skins and the wall)
+js/app.js              Saved state, party & initiative, roll log
+js/tray.js             Dice pool, modifier, advantage, the Roll button
+js/skins.js            The 40 dice skins, pattern painter and skin menu
+js/backdrop.js         Paints the stone wall behind the page
+js/dice3d.js           The 3D dice: shapes, numbers, physics, rolling, glow
 docs/screenshot.png    The picture at the top of this page
 README.md              You are here
 ```
