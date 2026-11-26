@@ -201,6 +201,12 @@ function dungeonArt() {
 const PAINTED = {
   wizard:          { src: "assets/characters/wizard-standard.webp",         w: 1024, h: 1536, box: [47, 0, 993, 1530], orb: [901, 166] },
   elf:             { src: "assets/characters/elf-standard.webp",            w: 1024, h: 1536, box: [20, 8, 996, 1513] },
+  // The elf's pose set (split from one sheet): all 807 tall with the feet on the bottom edge, so one size fits every pose.
+  // The standing figure is ~700 of the 807, so size ≈ 160 matches the old elf at 141.
+  elfAim:          { src: "assets/characters/elf-aim.webp",                 w: 449,  h: 807,  box: [4, 74, 445, 805] },
+  // The wizard's pose set: all 833 tall, feet on the bottom edge. The standing figure is ~673 of the 833,
+  // so size ≈ 176 matches the old wizard at 143. orb: the glowing orb on his staff (for the scene's magic light).
+  wizardCast:      { src: "assets/characters/wizard-cast.webp",             w: 542,  h: 833,  box: [4, 228, 538, 831], orb: [467, 321] },
   dwarf:           { src: "assets/characters/dwarf-standard.webp",          w: 1024, h: 1536, box: [12, 140, 1007, 1511] },
   barbarian:       { src: "assets/characters/barbarian-standard.webp",      w: 1024, h: 1536, box: [34, 6, 988, 1529] },
   skeletonSword:   { src: "assets/characters/skeleton-sword-standard.webp", w: 1024, h: 1536, box: [70, 10, 981, 1519] },
@@ -224,14 +230,14 @@ function paintedDungeonArt() {
   // The painting covers the frame (1536 × 1024 drawn 1600 wide), moved up so its floor meets the ground line
   const paint = (file) => `<image href="assets/scenes/${file}" x="0" y="-100" width="1600" height="1067" preserveAspectRatio="none"/>`;
 
-  const wizard = { x: 480, size: 143 };         // used for the wizard and for the glow on his orb
+  const wizard = { who: "wizardCast", x: 480, size: 176 };   // used for the wizard and for the glow on his orb (testing the casting pose)
 
   // Mid: the painting, the shadows, and everyone on the floor (all at one depth, so feet stay put)
   k.layer("mid", () =>
     paint("dungeon.webp") +
     // the party, left of center, facing right
-    painted(k, "elf", 380, floor, 141) +
-    painted(k, "wizard", wizard.x, floor, wizard.size) +
+    painted(k, "elfAim", 380, floor, 160) +                                     // testing the new side-view pose
+    painted(k, wizard.who, wizard.x, floor, wizard.size) +
     painted(k, "dwarf", 580, floor, 123, { anim: "lunge" }) +
     painted(k, "barbarian", 690, floor, 158, { anim: "lunge" }) +              // bigger: he's a barbarian
     // the undead, right of center, facing left: two staggered rows, with the giant anchoring the right flank
@@ -248,7 +254,7 @@ function paintedDungeonArt() {
   for (const [x, y] of [[193, 67], [758, 75], [1415, 77]])
     k.light({ kind: "torch", x, y, layer: "mid", ground: 270, radius: 170, strength: 0.25 });
   // The orb on the wizard's staff
-  const orb = paintedPoint("wizard", wizard.x, floor, wizard.size, PAINTED.wizard.orb);
+  const orb = paintedPoint(wizard.who, wizard.x, floor, wizard.size, PAINTED[wizard.who].orb);
   k.light({ kind: "magic", x: orb.x, y: orb.y, layer: "mid", color: "#9fe8ff", radius: 75, strength: 0.45 });
 
   // Foreground: the rubble overlay, framing the edges

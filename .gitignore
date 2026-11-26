@@ -7,3 +7,9 @@ CLAUDE.md
 
 # Full-size original art (masters for editing). The web-size WebP versions in assets/ are what the page uses.
 art-source/
+
+# In assets/, only the web-size .webp files are committed. Original exports (PNG, JPEG, ...) dropped in here
+# stay local, so the big files never enter the history.
+assets/**
+!assets/**/
+!assets/**/*.webp
