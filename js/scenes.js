@@ -197,29 +197,55 @@ function dungeonArt() {
 }
 
 /* ---------- Painted figures and scenes (test) ---------- */
-// Each file's size and the box around the character inside it, in pixels (measured from the images)
-const PAINTED = {
-  wizard:          { src: "assets/characters/wizard-standard.webp",         w: 1024, h: 1536, box: [47, 0, 993, 1530], orb: [901, 166] },
-  elf:             { src: "assets/characters/elf-standard.webp",            w: 1024, h: 1536, box: [20, 8, 996, 1513] },
-  // The elf's pose set (split from one sheet): all 807 tall with the feet on the bottom edge, so one size fits every pose.
-  // The standing figure is ~700 of the 807, so size ≈ 160 matches the old elf at 141.
-  elfAim:          { src: "assets/characters/elf-aim.webp",                 w: 449,  h: 807,  box: [4, 74, 445, 805] },
-  // The wizard's pose set: all 833 tall, feet on the bottom edge. The standing figure is ~673 of the 833,
-  // so size ≈ 176 matches the old wizard at 143. orb: the glowing orb on his staff (for the scene's magic light).
-  wizardCast:      { src: "assets/characters/wizard-cast.webp",             w: 542,  h: 833,  box: [4, 228, 538, 831], orb: [467, 321] },
-  dwarf:           { src: "assets/characters/dwarf-standard.webp",          w: 1024, h: 1536, box: [12, 140, 1007, 1511] },
-  barbarian:       { src: "assets/characters/barbarian-standard.webp",      w: 1024, h: 1536, box: [34, 6, 988, 1529] },
-  skeletonSword:   { src: "assets/characters/skeleton-sword-standard.webp", w: 1024, h: 1536, box: [70, 10, 981, 1519] },
-  skeletonSpear:   { src: "assets/characters/skeleton-spear-standard.webp", w: 1024, h: 1536, box: [7, 337, 1023, 1377] },
-  skeletonBrute:   { src: "assets/characters/skeleton-brute-standard.webp", w: 1024, h: 1536, box: [10, 0, 1004, 1523] },
-  skeletonBow:     { src: "assets/characters/skeleton-bow-standard.webp",   w: 1024, h: 1536, box: [26, 15, 987, 1523] },
-  skeletonAxe:     { src: "assets/characters/skeleton-axe-standard.webp",   w: 1024, h: 1536, box: [20, 85, 1000, 1495] }
+// How tall each kind of character stands, in feet, by D&D lore: boots to the top of the head (hats, helmets,
+// horns and raised weapons don't count). Dwarves stand 4–5 ft; elves and humans 5–6+ ft; our barbarian is a big one.
+// Every painted character's size comes from here, so everyone keeps the same relative scale in every scene and pose.
+const HEIGHT_FT = { elf: 5.75, human: 5.75, dwarf: 4.4, barbarian: 6.4 };
+const UNITS_PER_FOOT = 24;                      // the scene's scale at the front of the floor: a 5′9″ hero is 138 units tall
+// Each pose sheet: what kind of character it is, and how tall the standing body is in its images, in pixels
+// (boots to the top of the head, worked out from eye level: eyes sit at ~93.5% of a body's height)
+const SHEETS = {
+  elf:    { kind: "elf",   body: 697 },
+  wizard: { kind: "human", body: 630 },
+  dwarf:  { kind: "dwarf", body: 545 },
+  barbarian: { kind: "barbarian", body: 629 }
 };
+// Each image: its size and the box around the character, in pixels (measured from the images), and its sheet.
+// Every pose in a sheet has the same height with the feet on the bottom edge, so they all share one scale.
+// The old front-facing placeholders have no sheet yet, so they carry a size picked by eye instead.
+const PAINTED = {
+  wizard:          { src: "assets/characters/wizard-standard.webp",         w: 1024, h: 1536, box: [47, 0, 993, 1530], orb: [901, 166], size: 143 },
+  elf:             { src: "assets/characters/elf-standard.webp",            w: 1024, h: 1536, box: [20, 8, 996, 1513], size: 141 },
+  dwarf:           { src: "assets/characters/dwarf-standard.webp",          w: 1024, h: 1536, box: [12, 140, 1007, 1511], size: 123 },
+  elfAim:          { src: "assets/characters/elf-aim.webp",                 w: 449,  h: 807,  box: [4, 74, 445, 805], sheet: "elf" },
+  wizardCast:      { src: "assets/characters/wizard-cast.webp",             w: 542,  h: 833,  box: [4, 228, 538, 831], orb: [467, 321], sheet: "wizard" },
+  dwarfSwing:      { src: "assets/characters/dwarf-swing.webp",             w: 349,  h: 700,  box: [4, 13, 345, 698], sheet: "dwarf" },
+  barbarianSwing:  { src: "assets/characters/barbarian-swing.webp",         w: 455,  h: 716,  box: [4, 19, 451, 714], sheet: "barbarian" },
+  barbarian:       { src: "assets/characters/barbarian-standard.webp",      w: 1024, h: 1536, box: [34, 6, 988, 1529], size: 158 },
+  skeletonSword:   { src: "assets/characters/skeleton-sword-standard.webp", w: 1024, h: 1536, box: [70, 10, 981, 1519], size: 141 },
+  skeletonSpear:   { src: "assets/characters/skeleton-spear-standard.webp", w: 1024, h: 1536, box: [7, 337, 1023, 1377], size: 141 },
+  skeletonBrute:   { src: "assets/characters/skeleton-brute-standard.webp", w: 1024, h: 1536, box: [10, 0, 1004, 1523], size: 192 },
+  skeletonBow:     { src: "assets/characters/skeleton-bow-standard.webp",   w: 1024, h: 1536, box: [26, 15, 987, 1523], size: 141 },
+  skeletonAxe:     { src: "assets/characters/skeleton-axe-standard.webp",   w: 1024, h: 1536, box: [20, 85, 1000, 1495], size: 141 }
+};
+// How big to draw an image (its full height, in scene units). scale: extra sizing for depth, e.g. 0.95 for a back row.
+// Also returns how tall the character's body is on screen (for its shadow).
+function paintedSize(who, scale = 1) {
+  const p = PAINTED[who];
+  if (!p.sheet) return { size: p.size * scale, body: p.size * scale * 0.95 };
+  const { kind, body } = SHEETS[p.sheet], tall = HEIGHT_FT[kind] * UNITS_PER_FOOT * scale;
+  return { size: tall * p.h / body, body: tall };
+}
 // A painted character standing at (x, floor), with the kit's soft shadow under its feet. Returns the shadow's SVG.
-const painted = (k, who, x, floor, size, o = {}) => (k.figure({ ...PAINTED[who], x, y: floor, size, ...o }), k.shadow(x, floor + 1, size * 0.42));
-// Where a spot in a character's image (pixels) lands in the scene, for a character placed by painted() at (x, floor) and size
-const paintedPoint = (who, x, floor, size, [px, py]) => {
-  const { h, box: [l, , r, b] } = PAINTED[who], s = size / h;
+// o: scale (depth), plus figure options like face, anim and filter.
+const painted = (k, who, x, floor, { scale = 1, ...o } = {}) => {
+  const { size, body } = paintedSize(who, scale);
+  k.figure({ ...PAINTED[who], x, y: floor, size, ...o });
+  return k.shadow(x, floor + 1, body * 0.43);
+};
+// Where a spot in a character's image (pixels) lands in the scene, for a character placed by painted() at (x, floor)
+const paintedPoint = (who, x, floor, [px, py], scale = 1) => {
+  const { h, box: [l, , r, b] } = PAINTED[who], s = paintedSize(who, scale).size / h;
   return { x: x + (px - (l + r) / 2) * s, y: floor - (b - py) * s };
 };
 
@@ -230,31 +256,31 @@ function paintedDungeonArt() {
   // The painting covers the frame (1536 × 1024 drawn 1600 wide), moved up so its floor meets the ground line
   const paint = (file) => `<image href="assets/scenes/${file}" x="0" y="-100" width="1600" height="1067" preserveAspectRatio="none"/>`;
 
-  const wizard = { who: "wizardCast", x: 480, size: 176 };   // used for the wizard and for the glow on his orb (testing the casting pose)
+  const wizard = { who: "wizardCast", x: 480 };    // used for the wizard and for the glow on his orb
 
   // Mid: the painting, the shadows, and everyone on the floor (all at one depth, so feet stay put)
   k.layer("mid", () =>
     paint("dungeon.webp") +
     // the party, left of center, facing right
-    painted(k, "elfAim", 380, floor, 160) +                                     // testing the new side-view pose
-    painted(k, wizard.who, wizard.x, floor, wizard.size) +
-    painted(k, "dwarf", 580, floor, 123, { anim: "lunge" }) +
-    painted(k, "barbarian", 690, floor, 158, { anim: "lunge" }) +              // bigger: he's a barbarian
+    painted(k, "elfAim", 380, floor) +
+    painted(k, wizard.who, wizard.x, floor) +
+    painted(k, "dwarfSwing", 580, floor, { anim: "lunge" }) +
+    painted(k, "barbarianSwing", 690, floor, { anim: "lunge" }) +
     // the undead, right of center, facing left: two staggered rows, with the giant anchoring the right flank
     // back row: in the gaps of the front row, a bit smaller and dimmer
-    painted(k, "skeletonSword", 950, floor - 14, 134, { face: -1, filter: "brightness(.74) contrast(1.05) saturate(.85) sepia(.12)" }) +
-    painted(k, "skeletonBow", 1050, floor - 14, 136, { face: -1, filter: "brightness(.74) contrast(1.05) saturate(.85) sepia(.12)" }) +
+    painted(k, "skeletonSword", 950, floor - 14, { scale: 0.95, face: -1, filter: "brightness(.74) contrast(1.05) saturate(.85) sepia(.12)" }) +
+    painted(k, "skeletonBow", 1050, floor - 14, { scale: 0.965, face: -1, filter: "brightness(.74) contrast(1.05) saturate(.85) sepia(.12)" }) +
     // the giant: in front of the back row, out on the right
-    painted(k, "skeletonBrute", 1180, floor - 4, 192, { face: -1, anim: "lunge" }) +
+    painted(k, "skeletonBrute", 1180, floor - 4, { face: -1, anim: "lunge" }) +
     // front row: on the ground line, leading the charge
-    painted(k, "skeletonAxe", 1000, floor + 2, 141, { face: -1, anim: "lunge" }) +
-    painted(k, "skeletonSpear", 900, floor + 2, 141, { face: -1, anim: "lunge" }));
+    painted(k, "skeletonAxe", 1000, floor + 2, { face: -1, anim: "lunge" }) +
+    painted(k, "skeletonSpear", 900, floor + 2, { face: -1, anim: "lunge" }));
 
   // Torch glows on the painted torches, so they flicker (the painting already has the torches themselves)
   for (const [x, y] of [[193, 67], [758, 75], [1415, 77]])
     k.light({ kind: "torch", x, y, layer: "mid", ground: 270, radius: 170, strength: 0.25 });
   // The orb on the wizard's staff
-  const orb = paintedPoint(wizard.who, wizard.x, floor, wizard.size, PAINTED[wizard.who].orb);
+  const orb = paintedPoint(wizard.who, wizard.x, floor, PAINTED[wizard.who].orb);
   k.light({ kind: "magic", x: orb.x, y: orb.y, layer: "mid", color: "#9fe8ff", radius: 75, strength: 0.45 });
 
   // Foreground: the rubble overlay, framing the edges
